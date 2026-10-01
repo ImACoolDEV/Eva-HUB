@@ -1,117 +1,395 @@
 -- ========================================================
--- 🎃 EVA HUB - HALLOWEEN EDITION (REMOTE EVENT UPDATED) 🎃
+-- 🐱 EVA HUB V2.0 — SPOOKY CAT EDITION 🐾🎃
 -- ========================================================
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Clean up previous GUI if re-executing
-if LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("EvaHubGui") then
-    LocalPlayer.PlayerGui.EvaHubGui:Destroy()
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Cleanup existing GUI on re-execute
+if PlayerGui:FindFirstChild("EvaHubCatGui") then
+    PlayerGui.EvaHubCatGui:Destroy()
 end
 
--- GUI Creation
-local EvaHubGui = Instance.new("ScreenGui")
-EvaHubGui.Name = "EvaHubGui"
-EvaHubGui.ResetOnSpawn = false
-EvaHubGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+--------------------------------------------------------------------------------
+-- DRAGGABLE HELPER
+--------------------------------------------------------------------------------
+local function makeDraggable(guiFrame, dragHandle)
+    dragHandle = dragHandle or guiFrame
+    local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
+    
+    dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = guiFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
 
+    dragHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            guiFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+--------------------------------------------------------------------------------
+-- MAIN SCREEN GUI
+--------------------------------------------------------------------------------
+local EvaHubCatGui = Instance.new("ScreenGui")
+EvaHubCatGui.Name = "EvaHubCatGui"
+EvaHubCatGui.ResetOnSpawn = false
+EvaHubCatGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+EvaHubCatGui.Parent = PlayerGui
+
+-- Main Container Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 340, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -210)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 12, 28)
-MainFrame.BorderSizePixel = 0
+MainFrame.Size = UDim2.new(0, 380, 0, 520)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
+MainFrame.BackgroundColor3 = Color3.fromRGB(24, 15, 32) -- Dark Cat Purple
 MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = EvaHubGui
+MainFrame.Parent = EvaHubCatGui
 
-local FrameCorner = Instance.new("UICorner")
-FrameCorner.CornerRadius = UDim.new(0, 10)
-FrameCorner.Parent = MainFrame
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Thickness = 2.5
+MainStroke.Color = Color3.fromRGB(255, 120, 190) -- Neon Cat Pink
 
-local FrameStroke = Instance.new("UIStroke")
-FrameStroke.Color = Color3.fromRGB(255, 110, 0)
-FrameStroke.Thickness = 2
-FrameStroke.Parent = MainFrame
+-- Cat Ears Header Decoration
+local LeftEar = Instance.new("Frame")
+LeftEar.Size = UDim2.new(0, 45, 0, 45)
+LeftEar.Position = UDim2.new(0, 15, 0, -25)
+LeftEar.BackgroundColor3 = Color3.fromRGB(255, 120, 190)
+LeftEar.Rotation = -25
+LeftEar.ZIndex = 0
+LeftEar.Parent = MainFrame
+Instance.new("UICorner", LeftEar).CornerRadius = UDim.new(0, 10)
 
--- Title Banner
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(1, 0, 0, 45)
-Title.BackgroundTransparency = 1
-Title.Text = "🎃 Eva Hub 👻"
-Title.TextColor3 = Color3.fromRGB(255, 130, 0)
-Title.TextSize = 22
-Title.Font = Enum.Font.FredokaOne
-Title.Parent = MainFrame
+local RightEar = Instance.new("Frame")
+RightEar.Size = UDim2.new(0, 45, 0, 45)
+RightEar.Position = UDim2.new(1, -60, 0, -25)
+RightEar.BackgroundColor3 = Color3.fromRGB(255, 120, 190)
+RightEar.Rotation = 25
+RightEar.ZIndex = 0
+RightEar.Parent = MainFrame
+Instance.new("UICorner", RightEar).CornerRadius = UDim.new(0, 10)
 
-local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(1, 0, 0, 20)
-Subtitle.Position = UDim2.new(0, 0, 0, 35)
-Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Spooky Spells & Remote Triggers"
-Subtitle.TextColor3 = Color3.fromRGB(160, 120, 200)
-Subtitle.TextSize = 12
-Subtitle.Font = Enum.Font.SourceSansItalic
-Subtitle.Parent = MainFrame
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 50)
+TitleBar.BackgroundColor3 = Color3.fromRGB(36, 20, 50)
+TitleBar.ZIndex = 10
+TitleBar.Parent = MainFrame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 16)
 
--- Container for buttons
-local Container = Instance.new("Frame")
-Container.Size = UDim2.new(1, -20, 1, -70)
-Container.Position = UDim2.new(0, 10, 0, 60)
-Container.BackgroundTransparency = 1
-Container.Parent = MainFrame
+makeDraggable(MainFrame, TitleBar)
 
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 10)
-UIListLayout.Parent = Container
+local TitleText = Instance.new("TextLabel")
+TitleText.Size = UDim2.new(0.8, 0, 1, 0)
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "🐾 EVA HUB — SPOOKY CAT 🐱"
+TitleText.TextColor3 = Color3.fromRGB(255, 150, 210)
+TitleText.Font = Enum.Font.FredokaOne
+TitleText.TextSize = 17
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.ZIndex = 11
+TitleText.Parent = TitleBar
 
--- Button Creator
-local function createButton(name, text, color)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 90)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 14
+CloseBtn.ZIndex = 12
+CloseBtn.Parent = TitleBar
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Scrolling Container
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -20, 1, -65)
+Scroll.Position = UDim2.new(0, 10, 0, 55)
+Scroll.BackgroundTransparency = 1
+Scroll.ScrollBarThickness = 5
+Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 120, 190)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 620)
+Scroll.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout")
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 10)
+UIList.Parent = Scroll
+
+--------------------------------------------------------------------------------
+-- HELPER CREATORS
+--------------------------------------------------------------------------------
+local function createButton(text, order)
     local btn = Instance.new("TextButton")
-    btn.Name = name
     btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = color or Color3.fromRGB(35, 22, 50)
+    btn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 15
-    btn.Parent = Container
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255, 110, 0)
-    stroke.Thickness = 1
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent = btn
-
-    return btn
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
+    btn.LayoutOrder = order
+    btn.Parent = Scroll
+    
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 1.5
+    stroke.Color = Color3.fromRGB(255, 120, 190)
+    return btn, stroke
 end
 
--- ========================================================
--- FEATURE 1: DELAY AUTO PICKUP
--- ========================================================
+--------------------------------------------------------------------------------
+-- 1. REAL-TIME PLAYER HP BAR ("LIKE OUR HP")
+--------------------------------------------------------------------------------
+local HPFrame = Instance.new("Frame")
+HPFrame.Size = UDim2.new(1, 0, 0, 65)
+HPFrame.BackgroundColor3 = Color3.fromRGB(35, 18, 48)
+HPFrame.LayoutOrder = 1
+HPFrame.Parent = Scroll
+Instance.new("UICorner", HPFrame).CornerRadius = UDim.new(0, 10)
+local HPStroke = Instance.new("UIStroke", HPFrame)
+HPStroke.Thickness = 1.5
+HPStroke.Color = Color3.fromRGB(255, 120, 190)
 
+local HPLabel = Instance.new("TextLabel")
+HPLabel.Size = UDim2.new(1, -20, 0, 22)
+HPLabel.Position = UDim2.new(0, 10, 0, 6)
+HPLabel.BackgroundTransparency = 1
+HPLabel.Text = "🐾 CAT HEALTH (OUR HP)"
+HPLabel.TextColor3 = Color3.fromRGB(255, 160, 220)
+HPLabel.Font = Enum.Font.GothamBold
+HPLabel.TextSize = 12
+HPLabel.TextXAlignment = Enum.TextXAlignment.Left
+HPLabel.Parent = HPFrame
+
+local HPBarBg = Instance.new("Frame")
+HPBarBg.Size = UDim2.new(1, -20, 0, 18)
+HPBarBg.Position = UDim2.new(0, 10, 0, 32)
+HPBarBg.BackgroundColor3 = Color3.fromRGB(20, 10, 30)
+HPBarBg.Parent = HPFrame
+Instance.new("UICorner", HPBarBg).CornerRadius = UDim.new(0, 6)
+
+local HPBarFill = Instance.new("Frame")
+HPBarFill.Size = UDim2.new(1, 0, 1, 0)
+HPBarFill.BackgroundColor3 = Color3.fromRGB(255, 100, 180)
+HPBarFill.Parent = HPBarBg
+Instance.new("UICorner", HPBarFill).CornerRadius = UDim.new(0, 6)
+
+local HPText = Instance.new("TextLabel")
+HPText.Size = UDim2.new(1, 0, 1, 0)
+HPText.BackgroundTransparency = 1
+HPText.Text = "100 / 100 HP (100%)"
+HPText.TextColor3 = Color3.fromRGB(255, 255, 255)
+HPText.Font = Enum.Font.GothamBold
+HPText.TextSize = 10
+HPText.ZIndex = 2
+HPText.Parent = HPBarBg
+
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        local curHP = math.clamp(hum.Health, 0, hum.MaxHealth)
+        local maxHP = math.max(hum.MaxHealth, 1)
+        local ratio = math.clamp(curHP / maxHP, 0, 1)
+        
+        TweenService:Create(HPBarFill, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(ratio, 0, 1, 0)
+        }):Play()
+        
+        HPText.Text = string.format("%d / %d HP (%d%%)", math.floor(curHP), math.floor(maxHP), math.floor(ratio * 100))
+    else
+        HPText.Text = "No Character HP Found"
+    end
+end)
+
+--------------------------------------------------------------------------------
+-- 2. 🐱 "MEOW I'M BRUH HOUR" ANIMATION FEATURE
+--------------------------------------------------------------------------------
+local MeowBtn = createButton("🐱 MEOW I'M BRUH HOUR! 🐾", 2)
+
+MeowBtn.MouseButton1Click:Connect(function()
+    -- Character bounce / meow spin animation
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if hrp then
+        local origCFrame = hrp.CFrame
+        task.spawn(function()
+            for i = 1, 12 do
+                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(30), 0) + Vector3.new(0, 0.4, 0)
+                task.wait(0.03)
+            end
+        end)
+    end
+
+    -- Bouncing Cat Banner Notification on screen
+    local Banner = Instance.new("TextLabel")
+    Banner.Size = UDim2.new(0, 320, 0, 60)
+    Banner.Position = UDim2.new(0.5, -160, 0.2, 0)
+    Banner.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
+    Banner.Text = "🐱 MEOW I'M BRUH HOUR! 🐾"
+    Banner.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Banner.Font = Enum.Font.FredokaOne
+    Banner.TextSize = 20
+    Banner.ZIndex = 100
+    Banner.Parent = EvaHubCatGui
+    Instance.new("UICorner", Banner).CornerRadius = UDim.new(0, 14)
+    local BannerStroke = Instance.new("UIStroke", Banner)
+    BannerStroke.Thickness = 3
+    BannerStroke.Color = Color3.fromRGB(255, 255, 255)
+
+    -- Pop-in Tween Animation
+    Banner.ScaleType = Enum.ScaleType.Fit
+    Banner.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(Banner, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 320, 0, 60)
+    }):Play()
+
+    task.delay(1.8, function()
+        local fade = TweenService:Create(Banner, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
+            TextTransparency = 1
+        })
+        fade:Play()
+        fade.Completed:Connect(function()
+            Banner:Destroy()
+        end)
+    end)
+end)
+
+--------------------------------------------------------------------------------
+-- 3. ⚡ SPEED CHANGER
+--------------------------------------------------------------------------------
+local SpeedFrame = Instance.new("Frame")
+SpeedFrame.Size = UDim2.new(1, 0, 0, 80)
+SpeedFrame.BackgroundColor3 = Color3.fromRGB(35, 18, 48)
+SpeedFrame.LayoutOrder = 3
+SpeedFrame.Parent = Scroll
+Instance.new("UICorner", SpeedFrame).CornerRadius = UDim.new(0, 10)
+local SpeedStroke = Instance.new("UIStroke", SpeedFrame)
+SpeedStroke.Thickness = 1.5
+SpeedStroke.Color = Color3.fromRGB(255, 120, 190)
+
+local SpeedTitle = Instance.new("TextLabel")
+SpeedTitle.Size = UDim2.new(1, -10, 0, 20)
+SpeedTitle.Position = UDim2.new(0, 10, 0, 5)
+SpeedTitle.BackgroundTransparency = 1
+SpeedTitle.Text = "⚡ SPEED CHANGER"
+SpeedTitle.TextColor3 = Color3.fromRGB(255, 160, 220)
+SpeedTitle.Font = Enum.Font.GothamBold
+SpeedTitle.TextSize = 12
+SpeedTitle.TextXAlignment = Enum.TextXAlignment.Left
+SpeedTitle.Parent = SpeedFrame
+
+local SpeedInput = Instance.new("TextBox")
+SpeedInput.Size = UDim2.new(0.42, 0, 0, 35)
+SpeedInput.Position = UDim2.new(0, 10, 0, 32)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(22, 10, 32)
+SpeedInput.Text = "50"
+SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedInput.Font = Enum.Font.GothamBold
+SpeedInput.TextSize = 13
+SpeedInput.Parent = SpeedFrame
+Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
+
+local ApplySpeedBtn = Instance.new("TextButton")
+ApplySpeedBtn.Size = UDim2.new(0.25, 0, 0, 35)
+ApplySpeedBtn.Position = UDim2.new(0.45, 5, 0, 32)
+ApplySpeedBtn.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
+ApplySpeedBtn.Text = "SET"
+ApplySpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ApplySpeedBtn.Font = Enum.Font.GothamBold
+ApplySpeedBtn.TextSize = 12
+ApplySpeedBtn.Parent = SpeedFrame
+Instance.new("UICorner", ApplySpeedBtn).CornerRadius = UDim.new(0, 8)
+
+local ResetSpeedBtn = Instance.new("TextButton")
+ResetSpeedBtn.Size = UDim2.new(0.22, 0, 0, 35)
+ResetSpeedBtn.Position = UDim2.new(0.72, 5, 0, 32)
+ResetSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 70)
+ResetSpeedBtn.Text = "RESET"
+ResetSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ResetSpeedBtn.Font = Enum.Font.GothamBold
+ResetSpeedBtn.TextSize = 11
+ResetSpeedBtn.Parent = SpeedFrame
+Instance.new("UICorner", ResetSpeedBtn).CornerRadius = UDim.new(0, 8)
+
+local setSpeedValue = nil
+
+ApplySpeedBtn.MouseButton1Click:Connect(function()
+    local val = tonumber(SpeedInput.Text)
+    if val then
+        setSpeedValue = val
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = val end
+        ApplySpeedBtn.Text = "DONE!"
+        task.delay(1, function() ApplySpeedBtn.Text = "SET" end)
+    end
+end)
+
+ResetSpeedBtn.MouseButton1Click:Connect(function()
+    setSpeedValue = nil
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then hum.WalkSpeed = 16 end
+    ResetSpeedBtn.Text = "16"
+    task.delay(1, function() ResetSpeedBtn.Text = "RESET" end)
+end)
+
+RunService.Heartbeat:Connect(function()
+    if setSpeedValue then
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum and hum.WalkSpeed ~= setSpeedValue then
+            hum.WalkSpeed = setSpeedValue
+        end
+    end
+end)
+
+--------------------------------------------------------------------------------
+-- 4. 🦇 DELAY AUTO PICKUP
+--------------------------------------------------------------------------------
+local AutoPickupBtn, AutoPickupStroke = createButton("🦇 AUTO PICKUP: OFF (0.5s)", 4)
 local autoPickupActive = false
 local pickupDelay = 0.5
-
-local AutoPickupBtn = createButton("AutoPickupBtn", "🦇 Auto Pickup: OFF (Delay: " .. pickupDelay .. "s)")
 
 AutoPickupBtn.MouseButton1Click:Connect(function()
     autoPickupActive = not autoPickupActive
     if autoPickupActive then
-        AutoPickupBtn.Text = "🦇 Auto Pickup: ON (Delay: " .. pickupDelay .. "s)"
-        AutoPickupBtn.BackgroundColor3 = Color3.fromRGB(80, 40, 110)
+        AutoPickupBtn.Text = "🦇 AUTO PICKUP: ON (0.5s)"
+        AutoPickupBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
     else
-        AutoPickupBtn.Text = "🦇 Auto Pickup: OFF (Delay: " .. pickupDelay .. "s)"
-        AutoPickupBtn.BackgroundColor3 = Color3.fromRGB(35, 22, 50)
+        AutoPickupBtn.Text = "🦇 AUTO PICKUP: OFF (0.5s)"
+        AutoPickupBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
     end
 end)
 
@@ -120,14 +398,15 @@ task.spawn(function()
         task.wait(pickupDelay)
         if autoPickupActive then
             local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                for _, obj in pairs(workspace:GetChildren()) do
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                for _, obj in pairs(Workspace:GetChildren()) do
                     if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
-                        if firetouchinterest then
-                            firetouchinterest(char.HumanoidRootPart, obj.Handle, 0)
-                            firetouchinterest(char.HumanoidRootPart, obj.Handle, 1)
+                        if typeof(firetouchinterest) == "function" then
+                            firetouchinterest(hrp, obj.Handle, 0)
+                            firetouchinterest(hrp, obj.Handle, 1)
                         else
-                            obj.Handle.CFrame = char.HumanoidRootPart.CFrame
+                            obj.Handle.CFrame = hrp.CFrame
                         end
                     end
                 end
@@ -136,90 +415,71 @@ task.spawn(function()
     end
 end)
 
--- ========================================================
--- FEATURE 2: 1000% HP PLAYER & AI BATTLE
--- ========================================================
+--------------------------------------------------------------------------------
+-- 5. 🤖 AI BATTLE
+--------------------------------------------------------------------------------
+local AiBattleBtn, AiBattleStroke = createButton("🤖 AI BATTLE MODE: OFF", 5)
+local aiBattleActive = false
 
-local HpBtn = createButton("HpBtn", "🍬 Set Max Health to 1000% (10x HP)")
-
-HpBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.MaxHealth = 1000
-            hum.Health = hum.MaxHealth
-            HpBtn.Text = "🍬 Health Set to " .. tostring(hum.MaxHealth) .. " HP!"
-            task.wait(1.5)
-            HpBtn.Text = "🍬 Set Max Health to 1000% (10x HP)"
-        end
+AiBattleBtn.MouseButton1Click:Connect(function()
+    aiBattleActive = not aiBattleActive
+    if aiBattleActive then
+        AiBattleBtn.Text = "🤖 AI BATTLE MODE: ON"
+        AiBattleBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
+    else
+        AiBattleBtn.Text = "🤖 AI BATTLE MODE: OFF"
+        AiBattleBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
     end
 end)
 
-local AiHpBtn = createButton("AiHpBtn", "💀 Set Nearest AI/NPC HP to 1000%")
-
-AiHpBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local pPos = char.HumanoidRootPart.Position
-        local closestNpc = nil
-        local closestDist = math.huge
-
-        for _, model in pairs(workspace:GetChildren()) do
-            if model:IsA("Model") and model ~= char and model:FindFirstChildOfClass("Humanoid") and model:FindFirstChild("HumanoidRootPart") then
-                if not Players:GetPlayerFromCharacter(model) then
-                    local dist = (model.HumanoidRootPart.Position - pPos).Magnitude
-                    if dist < closestDist then
-                        closestDist = dist
-                        closestNpc = model
+RunService.RenderStepped:Connect(function()
+    if aiBattleActive then
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local closestNpc = nil
+            local closestDist = math.huge
+            for _, model in pairs(Workspace:GetChildren()) do
+                if model:IsA("Model") and model ~= char and model:FindFirstChildOfClass("Humanoid") and model:FindFirstChild("HumanoidRootPart") then
+                    if not Players:GetPlayerFromCharacter(model) then
+                        local dist = (model.HumanoidRootPart.Position - hrp.Position).Magnitude
+                        if dist < closestDist then
+                            closestDist = dist
+                            closestNpc = model
+                        end
                     end
                 end
             end
-        end
-
-        if closestNpc then
-            local hum = closestNpc:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.MaxHealth = hum.MaxHealth * 10
-                hum.Health = hum.MaxHealth
-                AiHpBtn.Text = "💀 Boosted " .. closestNpc.Name .. " to 1000% HP!"
-                task.wait(1.5)
-                AiHpBtn.Text = "💀 Set Nearest AI/NPC HP to 1000%"
+            if closestNpc and closestNpc:FindFirstChild("HumanoidRootPart") then
+                local angle = tick() * 10
+                hrp.CFrame = CFrame.new(closestNpc.HumanoidRootPart.Position + Vector3.new(math.cos(angle) * 7, 2, math.sin(angle) * 7), closestNpc.HumanoidRootPart.Position)
+                local tool = char:FindFirstChildOfClass("Tool")
+                if tool then tool:Activate() end
             end
         end
     end
 end)
 
--- ========================================================
--- FEATURE 3: FORCE DROP VIA SpawnItem REMOTE EVENT
--- ========================================================
-
-local ForceDropBtn = createButton("ForceDropBtn", "🎃 Force Drop (Trigger SpawnItem Remote)")
+--------------------------------------------------------------------------------
+-- 6. 🎃 FORCE DROP (TRIGGER SpawnItem REMOTE)
+--------------------------------------------------------------------------------
+local ForceDropBtn = createButton("💥 FORCE DROP (TRIGGER SpawnItem)", 6)
 
 ForceDropBtn.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     local pos = char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.CFrame or CFrame.new()
 
-    -- Search game for SpawnItem RemoteEvent or RemoteFunction
-    local remote = ReplicatedStorage:FindFirstChild("SpawnItem", true) 
-        or workspace:FindFirstChild("SpawnItem", true)
-
+    local remote = ReplicatedStorage:FindFirstChild("SpawnItem", true) or Workspace:FindFirstChild("SpawnItem", true)
     if remote then
         if remote:IsA("RemoteEvent") then
-            -- Fires equipped tool or default drop parameter
-            local equippedTool = char and char:FindFirstChildOfClass("Tool")
-            if equippedTool then
-                remote:FireServer(equippedTool.Name, pos)
-            else
-                remote:FireServer("Drop", pos)
-            end
-            ForceDropBtn.Text = "🎃 Fired SpawnItem Remote!"
+            local tool = char and char:FindFirstChildOfClass("Tool")
+            remote:FireServer(tool and tool.Name or "Drop", pos)
+            ForceDropBtn.Text = "💥 FIRED SpawnItem REMOTE!"
         elseif remote:IsA("RemoteFunction") then
             remote:InvokeServer("Drop", pos)
-            ForceDropBtn.Text = "🎃 Invoked SpawnItem Remote!"
+            ForceDropBtn.Text = "💥 INVOKED SpawnItem REMOTE!"
         end
     else
-        -- Fallback: Loop through game to trigger any remote containing "SpawnItem"
         local found = false
         for _, v in pairs(game:GetDescendants()) do
             if v:IsA("RemoteEvent") and v.Name:lower():find("spawnitem") then
@@ -227,26 +487,22 @@ ForceDropBtn.MouseButton1Click:Connect(function()
                 found = true
             end
         end
-        if found then
-            ForceDropBtn.Text = "🎃 Triggered SpawnItem Event!"
-        else
-            ForceDropBtn.Text = "⚠️ 'SpawnItem' Remote Not Found!"
-        end
+        ForceDropBtn.Text = found and "💥 TRIGGERED SpawnItem EVENT!" or "⚠️ SpawnItem REMOTE NOT FOUND!"
     end
 
-    task.wait(1.5)
-    ForceDropBtn.Text = "🎃 Force Drop (Trigger SpawnItem Remote)"
+    task.delay(1.5, function()
+        ForceDropBtn.Text = "💥 FORCE DROP (TRIGGER SpawnItem)"
+    end)
 end)
 
--- ========================================================
--- HALLOWEEN ANIMATED TITLE
--- ========================================================
-
+--------------------------------------------------------------------------------
+-- 🎃 HALLOWEEN CAT ANIMATED TITLE
+--------------------------------------------------------------------------------
 task.spawn(function()
-    local icons = {"🎃", "👻", "🦇", "🍬", "🕷️"}
-    while EvaHubGui and EvaHubGui.Parent do
+    local catIcons = {"🐾", "🐱", "🎃", "👻", "🦇", "🍬"}
+    while EvaHubCatGui and EvaHubCatGui.Parent do
         task.wait(2)
-        local randomIcon = icons[math.random(1, #icons)]
-        Title.Text = randomIcon .. " Eva Hub " .. randomIcon
+        local icon = catIcons[math.random(1, #catIcons)]
+        TitleText.Text = icon .. " EVA HUB — SPOOKY CAT " .. icon
     end
 end)
