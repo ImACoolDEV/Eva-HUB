@@ -1,6 +1,10 @@
 -- ========================================================
--- 🐱 EVA HUB V2.0 — SPOOKY CAT EDITION 🐾🎃
+-- 🐱 EVA HUB V2.5 — SPOOKY CAT EDITION 🐾🎃
 -- ========================================================
+
+if getgenv().EvaHubCleanup then
+    pcall(getgenv().EvaHubCleanup)
+end
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -17,8 +21,17 @@ if PlayerGui:FindFirstChild("EvaHubCatGui") then
     PlayerGui.EvaHubCatGui:Destroy()
 end
 
+local Connections, Tasks = {}, {}
+getgenv().EvaHubCleanup = function()
+    for _, conn in pairs(Connections) do if conn then conn:Disconnect() end end
+    for _, taskRef in pairs(Tasks) do if taskRef then pcall(task.cancel, taskRef) end end
+    table.clear(Connections)
+    table.clear(Tasks)
+    if PlayerGui:FindFirstChild("EvaHubCatGui") then PlayerGui.EvaHubCatGui:Destroy() end
+end
+
 --------------------------------------------------------------------------------
--- DRAGGABLE HELPER
+-- UNIVERSAL DRAGGABLE HELPER
 --------------------------------------------------------------------------------
 local function makeDraggable(guiFrame, dragHandle)
     dragHandle = dragHandle or guiFrame
@@ -52,7 +65,7 @@ local function makeDraggable(guiFrame, dragHandle)
 end
 
 --------------------------------------------------------------------------------
--- MAIN SCREEN GUI
+-- MAIN GUI CREATION
 --------------------------------------------------------------------------------
 local EvaHubCatGui = Instance.new("ScreenGui")
 EvaHubCatGui.Name = "EvaHubCatGui"
@@ -60,24 +73,23 @@ EvaHubCatGui.ResetOnSpawn = false
 EvaHubCatGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 EvaHubCatGui.Parent = PlayerGui
 
--- Main Container Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 380, 0, 520)
 MainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
-MainFrame.BackgroundColor3 = Color3.fromRGB(24, 15, 32) -- Dark Cat Purple
+MainFrame.BackgroundColor3 = Color3.fromRGB(24, 15, 32)
 MainFrame.Active = true
 MainFrame.Parent = EvaHubCatGui
 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Thickness = 2.5
-MainStroke.Color = Color3.fromRGB(255, 120, 190) -- Neon Cat Pink
+MainStroke.Color = Color3.fromRGB(255, 120, 190)
 
--- Cat Ears Header Decoration
+-- Decorative Cat Ears
 local LeftEar = Instance.new("Frame")
-LeftEar.Size = UDim2.new(0, 45, 0, 45)
-LeftEar.Position = UDim2.new(0, 15, 0, -25)
+LeftEar.Size = UDim2.new(0, 42, 0, 42)
+LeftEar.Position = UDim2.new(0, 18, 0, -22)
 LeftEar.BackgroundColor3 = Color3.fromRGB(255, 120, 190)
 LeftEar.Rotation = -25
 LeftEar.ZIndex = 0
@@ -85,8 +97,8 @@ LeftEar.Parent = MainFrame
 Instance.new("UICorner", LeftEar).CornerRadius = UDim.new(0, 10)
 
 local RightEar = Instance.new("Frame")
-RightEar.Size = UDim2.new(0, 45, 0, 45)
-RightEar.Position = UDim2.new(1, -60, 0, -25)
+RightEar.Size = UDim2.new(0, 42, 0, 42)
+RightEar.Position = UDim2.new(1, -60, 0, -22)
 RightEar.BackgroundColor3 = Color3.fromRGB(255, 120, 190)
 RightEar.Rotation = 25
 RightEar.ZIndex = 0
@@ -110,7 +122,7 @@ TitleText.BackgroundTransparency = 1
 TitleText.Text = "🐾 EVA HUB — SPOOKY CAT 🐱"
 TitleText.TextColor3 = Color3.fromRGB(255, 150, 210)
 TitleText.Font = Enum.Font.FredokaOne
-TitleText.TextSize = 17
+TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.ZIndex = 11
 TitleText.Parent = TitleBar
@@ -127,7 +139,7 @@ CloseBtn.ZIndex = 12
 CloseBtn.Parent = TitleBar
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
 
-CloseBtn.MouseButton1Click:Connect(function()
+CloseBtn.Activated:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
@@ -138,7 +150,6 @@ Scroll.Position = UDim2.new(0, 10, 0, 55)
 Scroll.BackgroundTransparency = 1
 Scroll.ScrollBarThickness = 5
 Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 120, 190)
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 620)
 Scroll.Parent = MainFrame
 
 local UIList = Instance.new("UIListLayout")
@@ -146,17 +157,18 @@ UIList.SortOrder = Enum.SortOrder.LayoutOrder
 UIList.Padding = UDim.new(0, 10)
 UIList.Parent = Scroll
 
---------------------------------------------------------------------------------
--- HELPER CREATORS
---------------------------------------------------------------------------------
+UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
+end)
+
 local function createButton(text, order)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.Size = UDim2.new(1, 0, 0, 42)
     btn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 13
+    btn.TextSize = 12
     btn.LayoutOrder = order
     btn.Parent = Scroll
     
@@ -168,7 +180,7 @@ local function createButton(text, order)
 end
 
 --------------------------------------------------------------------------------
--- 1. REAL-TIME PLAYER HP BAR ("LIKE OUR HP")
+-- 1. REAL-TIME PLAYER HP BAR
 --------------------------------------------------------------------------------
 local HPFrame = Instance.new("Frame")
 HPFrame.Size = UDim2.new(1, 0, 0, 65)
@@ -184,7 +196,7 @@ local HPLabel = Instance.new("TextLabel")
 HPLabel.Size = UDim2.new(1, -20, 0, 22)
 HPLabel.Position = UDim2.new(0, 10, 0, 6)
 HPLabel.BackgroundTransparency = 1
-HPLabel.Text = "🐾 CAT HEALTH (OUR HP)"
+HPLabel.Text = "🐾 CAT HEALTH (PLAYER HP)"
 HPLabel.TextColor3 = Color3.fromRGB(255, 160, 220)
 HPLabel.Font = Enum.Font.GothamBold
 HPLabel.TextSize = 12
@@ -214,7 +226,7 @@ HPText.TextSize = 10
 HPText.ZIndex = 2
 HPText.Parent = HPBarBg
 
-RunService.Heartbeat:Connect(function()
+Connections.HPTracker = RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if hum then
@@ -228,73 +240,129 @@ RunService.Heartbeat:Connect(function()
         
         HPText.Text = string.format("%d / %d HP (%d%%)", math.floor(curHP), math.floor(maxHP), math.floor(ratio * 100))
     else
-        HPText.Text = "No Character HP Found"
+        HPText.Text = "No Humanoid Found"
     end
 end)
 
 --------------------------------------------------------------------------------
--- 2. 🐱 "MEOW I'M BRUH HOUR" ANIMATION FEATURE
+-- 2. 🦅 FLY HACK FEATURE
 --------------------------------------------------------------------------------
-local MeowBtn = createButton("🐱 MEOW I'M BRUH HOUR! 🐾", 2)
+local FlyBtn, FlyStroke = createButton("🦅 FLY HACK: OFF", 2)
+local flyActive = false
+local flyBodyVel, flyBodyGyro
 
-MeowBtn.MouseButton1Click:Connect(function()
-    -- Character bounce / meow spin animation
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+FlyBtn.Activated:Connect(function()
+    flyActive = not flyActive
     
-    if hrp then
-        local origCFrame = hrp.CFrame
-        task.spawn(function()
-            for i = 1, 12 do
-                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(30), 0) + Vector3.new(0, 0.4, 0)
-                task.wait(0.03)
-            end
-        end)
+    if Connections.Fly then Connections.Fly:Disconnect() Connections.Fly = nil end
+    if flyBodyVel then flyBodyVel:Destroy() flyBodyVel = nil end
+    if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
+
+    if flyActive then
+        FlyBtn.Text = "🦅 FLY HACK: ON"
+        FlyBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
+        FlyStroke.Color = Color3.fromRGB(255, 160, 220)
+
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            flyBodyVel = Instance.new("BodyVelocity")
+            flyBodyVel.MaxForce = Vector3.new(1, 1, 1) * 1e6
+            flyBodyVel.Velocity = Vector3.zero
+            flyBodyVel.Parent = hrp
+
+            flyBodyGyro = Instance.new("BodyGyro")
+            flyBodyGyro.MaxTorque = Vector3.new(1, 1, 1) * 1e6
+            flyBodyGyro.CFrame = hrp.CFrame
+            flyBodyGyro.Parent = hrp
+
+            Connections.Fly = RunService.RenderStepped:Connect(function()
+                if not flyActive or not hrp or not flyBodyVel or not flyBodyGyro then return end
+                local camCF = Workspace.CurrentCamera.CFrame
+                flyBodyGyro.CFrame = camCF
+                local dir = Vector3.zero
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + camCF.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - camCF.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - camCF.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + camCF.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0, 1, 0) end
+                flyBodyVel.Velocity = (dir.Magnitude > 0) and (dir.Unit * 60) or Vector3.zero
+            end)
+        end
+    else
+        FlyBtn.Text = "🦅 FLY HACK: OFF"
+        FlyBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+        FlyStroke.Color = Color3.fromRGB(255, 120, 190)
+    end
+end)
+
+--------------------------------------------------------------------------------
+-- 3. 🔥 START HELLSAWAKENING MODE (StartMode Event Trigger)
+--------------------------------------------------------------------------------
+local HellsBtn, HellsStroke = createButton("🔥 START HELLSAWAKENING MODE", 3)
+
+HellsBtn.Activated:Connect(function()
+    local triggered = false
+    local rakeModel = Workspace:FindFirstChild("the_rake", true) or Workspace:FindFirstChild("The_Rake", true) or Workspace:FindFirstChild("Rake", true)
+    
+    local startModeRemote = (rakeModel and rakeModel:FindFirstChild("StartMode", true))
+        or ReplicatedStorage:FindFirstChild("StartMode", true)
+        or Workspace:FindFirstChild("StartMode", true)
+
+    if startModeRemote then
+        if startModeRemote:IsA("RemoteEvent") then
+            startModeRemote:FireServer("HellsAwakening")
+            startModeRemote:FireServer("HellsAwakeningMain")
+            triggered = true
+        elseif startModeRemote:IsA("BindableEvent") then
+            startModeRemote:Fire("HellsAwakening")
+            startModeRemote:Fire("HellsAwakeningMain")
+            triggered = true
+        elseif startModeRemote:IsA("RemoteFunction") then
+            pcall(function() startModeRemote:InvokeServer("HellsAwakening") end)
+            triggered = true
+        end
     end
 
-    -- Bouncing Cat Banner Notification on screen
-    local Banner = Instance.new("TextLabel")
-    Banner.Size = UDim2.new(0, 320, 0, 60)
-    Banner.Position = UDim2.new(0.5, -160, 0.2, 0)
-    Banner.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
-    Banner.Text = "🐱 MEOW I'M BRUH HOUR! 🐾"
-    Banner.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Banner.Font = Enum.Font.FredokaOne
-    Banner.TextSize = 20
-    Banner.ZIndex = 100
-    Banner.Parent = EvaHubCatGui
-    Instance.new("UICorner", Banner).CornerRadius = UDim.new(0, 14)
-    local BannerStroke = Instance.new("UIStroke", Banner)
-    BannerStroke.Thickness = 3
-    BannerStroke.Color = Color3.fromRGB(255, 255, 255)
+    if not triggered then
+        for _, obj in pairs(game:GetDescendants()) do
+            if (obj:IsA("RemoteEvent") or obj:IsA("BindableEvent")) and obj.Name:lower():find("startmode") then
+                if obj:IsA("RemoteEvent") then
+                    obj:FireServer("HellsAwakening")
+                    obj:FireServer("HellsAwakeningMain")
+                else
+                    obj:Fire("HellsAwakening")
+                    obj:Fire("HellsAwakeningMain")
+                end
+                triggered = true
+            end
+        end
+    end
 
-    -- Pop-in Tween Animation
-    Banner.ScaleType = Enum.ScaleType.Fit
-    Banner.Size = UDim2.new(0, 0, 0, 0)
-    TweenService:Create(Banner, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 320, 0, 60)
-    }):Play()
+    if triggered then
+        HellsBtn.Text = "🔥 HELLSAWAKENING STARTED!"
+        HellsBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
+        HellsStroke.Color = Color3.fromRGB(255, 160, 220)
+    else
+        HellsBtn.Text = "⚠️ StartMode EVENT NOT FOUND!"
+        HellsBtn.BackgroundColor3 = Color3.fromRGB(140, 40, 40)
+    end
 
-    task.delay(1.8, function()
-        local fade = TweenService:Create(Banner, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Size = UDim2.new(0, 0, 0, 0),
-            BackgroundTransparency = 1,
-            TextTransparency = 1
-        })
-        fade:Play()
-        fade.Completed:Connect(function()
-            Banner:Destroy()
-        end)
+    task.delay(1.5, function()
+        HellsBtn.Text = "🔥 START HELLSAWAKENING MODE"
+        HellsBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+        HellsStroke.Color = Color3.fromRGB(255, 120, 190)
     end)
 end)
 
 --------------------------------------------------------------------------------
--- 3. ⚡ SPEED CHANGER
+-- 4. ⚡ SPEED CHANGER
 --------------------------------------------------------------------------------
 local SpeedFrame = Instance.new("Frame")
-SpeedFrame.Size = UDim2.new(1, 0, 0, 80)
+SpeedFrame.Size = UDim2.new(1, 0, 0, 75)
 SpeedFrame.BackgroundColor3 = Color3.fromRGB(35, 18, 48)
-SpeedFrame.LayoutOrder = 3
+SpeedFrame.LayoutOrder = 4
 SpeedFrame.Parent = Scroll
 Instance.new("UICorner", SpeedFrame).CornerRadius = UDim.new(0, 10)
 local SpeedStroke = Instance.new("UIStroke", SpeedFrame)
@@ -313,8 +381,8 @@ SpeedTitle.TextXAlignment = Enum.TextXAlignment.Left
 SpeedTitle.Parent = SpeedFrame
 
 local SpeedInput = Instance.new("TextBox")
-SpeedInput.Size = UDim2.new(0.42, 0, 0, 35)
-SpeedInput.Position = UDim2.new(0, 10, 0, 32)
+SpeedInput.Size = UDim2.new(0.42, 0, 0, 32)
+SpeedInput.Position = UDim2.new(0, 10, 0, 30)
 SpeedInput.BackgroundColor3 = Color3.fromRGB(22, 10, 32)
 SpeedInput.Text = "50"
 SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -324,8 +392,8 @@ SpeedInput.Parent = SpeedFrame
 Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
 
 local ApplySpeedBtn = Instance.new("TextButton")
-ApplySpeedBtn.Size = UDim2.new(0.25, 0, 0, 35)
-ApplySpeedBtn.Position = UDim2.new(0.45, 5, 0, 32)
+ApplySpeedBtn.Size = UDim2.new(0.25, 0, 0, 32)
+ApplySpeedBtn.Position = UDim2.new(0.45, 5, 0, 30)
 ApplySpeedBtn.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
 ApplySpeedBtn.Text = "SET"
 ApplySpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -335,8 +403,8 @@ ApplySpeedBtn.Parent = SpeedFrame
 Instance.new("UICorner", ApplySpeedBtn).CornerRadius = UDim.new(0, 8)
 
 local ResetSpeedBtn = Instance.new("TextButton")
-ResetSpeedBtn.Size = UDim2.new(0.22, 0, 0, 35)
-ResetSpeedBtn.Position = UDim2.new(0.72, 5, 0, 32)
+ResetSpeedBtn.Size = UDim2.new(0.22, 0, 0, 32)
+ResetSpeedBtn.Position = UDim2.new(0.72, 5, 0, 30)
 ResetSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 70)
 ResetSpeedBtn.Text = "RESET"
 ResetSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -345,12 +413,12 @@ ResetSpeedBtn.TextSize = 11
 ResetSpeedBtn.Parent = SpeedFrame
 Instance.new("UICorner", ResetSpeedBtn).CornerRadius = UDim.new(0, 8)
 
-local setSpeedValue = nil
+local currentSpeedVal = nil
 
-ApplySpeedBtn.MouseButton1Click:Connect(function()
+ApplySpeedBtn.Activated:Connect(function()
     local val = tonumber(SpeedInput.Text)
     if val then
-        setSpeedValue = val
+        currentSpeedVal = val
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum.WalkSpeed = val end
         ApplySpeedBtn.Text = "DONE!"
@@ -358,44 +426,99 @@ ApplySpeedBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-ResetSpeedBtn.MouseButton1Click:Connect(function()
-    setSpeedValue = nil
+ResetSpeedBtn.Activated:Connect(function()
+    currentSpeedVal = nil
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.WalkSpeed = 16 end
     ResetSpeedBtn.Text = "16"
     task.delay(1, function() ResetSpeedBtn.Text = "RESET" end)
 end)
 
-RunService.Heartbeat:Connect(function()
-    if setSpeedValue then
+Connections.SpeedLock = RunService.Heartbeat:Connect(function()
+    if currentSpeedVal then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.WalkSpeed ~= setSpeedValue then
-            hum.WalkSpeed = setSpeedValue
+        if hum and hum.WalkSpeed ~= currentSpeedVal then
+            hum.WalkSpeed = currentSpeedVal
         end
     end
 end)
 
 --------------------------------------------------------------------------------
--- 4. 🦇 DELAY AUTO PICKUP
+-- 5. 🐱 MEOW I'M BRUH HOUR ANIMATION
 --------------------------------------------------------------------------------
-local AutoPickupBtn, AutoPickupStroke = createButton("🦇 AUTO PICKUP: OFF (0.5s)", 4)
-local autoPickupActive = false
-local pickupDelay = 0.5
+local MeowBtn = createButton("🐱 MEOW I'M BRUH HOUR! 🐾", 5)
 
-AutoPickupBtn.MouseButton1Click:Connect(function()
+MeowBtn.Activated:Connect(function()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if hrp then
+        task.spawn(function()
+            for _ = 1, 12 do
+                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(30), 0) + Vector3.new(0, 0.3, 0)
+                task.wait(0.02)
+            end
+        end)
+    end
+
+    local Banner = Instance.new("TextLabel")
+    Banner.Size = UDim2.new(0, 310, 0, 55)
+    Banner.Position = UDim2.new(0.5, -155, 0.2, 0)
+    Banner.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
+    Banner.Text = "🐱 MEOW I'M BRUH HOUR! 🐾"
+    Banner.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Banner.Font = Enum.Font.FredokaOne
+    Banner.TextSize = 18
+    Banner.ZIndex = 100
+    Banner.Parent = EvaHubCatGui
+    
+    Instance.new("UICorner", Banner).CornerRadius = UDim.new(0, 14)
+    local BannerStroke = Instance.new("UIStroke", Banner)
+    BannerStroke.Thickness = 2.5
+    BannerStroke.Color = Color3.fromRGB(255, 255, 255)
+
+    Banner.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(Banner, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 310, 0, 55)
+    }):Play()
+
+    task.delay(1.6, function()
+        if Banner and Banner.Parent then
+            local fade = TweenService:Create(Banner, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                Size = UDim2.new(0, 0, 0, 0),
+                BackgroundTransparency = 1,
+                TextTransparency = 1
+            })
+            fade:Play()
+            fade.Completed:Connect(function()
+                Banner:Destroy()
+            end)
+        end
+    end)
+end)
+
+--------------------------------------------------------------------------------
+-- 6. 🦇 DELAY AUTO PICKUP (0.5s)
+--------------------------------------------------------------------------------
+local AutoPickupBtn, AutoPickupStroke = createButton("🦇 AUTO PICKUP: OFF (0.5s)", 6)
+local autoPickupActive = false
+
+AutoPickupBtn.Activated:Connect(function()
     autoPickupActive = not autoPickupActive
     if autoPickupActive then
         AutoPickupBtn.Text = "🦇 AUTO PICKUP: ON (0.5s)"
         AutoPickupBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
+        AutoPickupStroke.Color = Color3.fromRGB(255, 160, 220)
     else
         AutoPickupBtn.Text = "🦇 AUTO PICKUP: OFF (0.5s)"
         AutoPickupBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+        AutoPickupStroke.Color = Color3.fromRGB(255, 120, 190)
     end
 end)
 
-task.spawn(function()
+Tasks.AutoPickup = task.spawn(function()
     while true do
-        task.wait(pickupDelay)
+        task.wait(0.5)
         if autoPickupActive then
             local char = LocalPlayer.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -403,10 +526,12 @@ task.spawn(function()
                 for _, obj in pairs(Workspace:GetChildren()) do
                     if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
                         if typeof(firetouchinterest) == "function" then
-                            firetouchinterest(hrp, obj.Handle, 0)
-                            firetouchinterest(hrp, obj.Handle, 1)
+                            pcall(function()
+                                firetouchinterest(hrp, obj.Handle, 0)
+                                firetouchinterest(hrp, obj.Handle, 1)
+                            end)
                         else
-                            obj.Handle.CFrame = hrp.CFrame
+                            pcall(function() obj.Handle.CFrame = hrp.CFrame end)
                         end
                     end
                 end
@@ -416,23 +541,25 @@ task.spawn(function()
 end)
 
 --------------------------------------------------------------------------------
--- 5. 🤖 AI BATTLE
+-- 7. 🤖 AI BATTLE
 --------------------------------------------------------------------------------
-local AiBattleBtn, AiBattleStroke = createButton("🤖 AI BATTLE MODE: OFF", 5)
+local AiBattleBtn, AiBattleStroke = createButton("🤖 AI BATTLE MODE: OFF", 7)
 local aiBattleActive = false
 
-AiBattleBtn.MouseButton1Click:Connect(function()
+AiBattleBtn.Activated:Connect(function()
     aiBattleActive = not aiBattleActive
     if aiBattleActive then
         AiBattleBtn.Text = "🤖 AI BATTLE MODE: ON"
         AiBattleBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
+        AiBattleStroke.Color = Color3.fromRGB(255, 160, 220)
     else
         AiBattleBtn.Text = "🤖 AI BATTLE MODE: OFF"
         AiBattleBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+        AiBattleStroke.Color = Color3.fromRGB(255, 120, 190)
     end
 end)
 
-RunService.RenderStepped:Connect(function()
+Connections.AiBattle = RunService.RenderStepped:Connect(function()
     if aiBattleActive then
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -454,18 +581,18 @@ RunService.RenderStepped:Connect(function()
                 local angle = tick() * 10
                 hrp.CFrame = CFrame.new(closestNpc.HumanoidRootPart.Position + Vector3.new(math.cos(angle) * 7, 2, math.sin(angle) * 7), closestNpc.HumanoidRootPart.Position)
                 local tool = char:FindFirstChildOfClass("Tool")
-                if tool then tool:Activate() end
+                if tool then pcall(function() tool:Activate() end) end
             end
         end
     end
 end)
 
 --------------------------------------------------------------------------------
--- 6. 🎃 FORCE DROP (TRIGGER SpawnItem REMOTE)
+-- 8. 💥 FORCE DROP (TRIGGER SpawnItem REMOTE)
 --------------------------------------------------------------------------------
-local ForceDropBtn = createButton("💥 FORCE DROP (TRIGGER SpawnItem)", 6)
+local ForceDropBtn = createButton("💥 FORCE DROP (TRIGGER SpawnItem)", 8)
 
-ForceDropBtn.MouseButton1Click:Connect(function()
+ForceDropBtn.Activated:Connect(function()
     local char = LocalPlayer.Character
     local pos = char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.CFrame or CFrame.new()
 
@@ -496,11 +623,11 @@ ForceDropBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------------------------------------
--- 🎃 HALLOWEEN CAT ANIMATED TITLE
+-- ANIMATED TITLE ICONS
 --------------------------------------------------------------------------------
-task.spawn(function()
+Tasks.TitleAnim = task.spawn(function()
     local catIcons = {"🐾", "🐱", "🎃", "👻", "🦇", "🍬"}
-    while EvaHubCatGui and EvaHubCatGui.Parent do
+    while true do
         task.wait(2)
         local icon = catIcons[math.random(1, #catIcons)]
         TitleText.Text = icon .. " EVA HUB — SPOOKY CAT " .. icon
