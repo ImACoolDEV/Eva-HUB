@@ -1,33 +1,30 @@
 -- ========================================================
--- 🐱 EVA HUB V2.5 — SPOOKY CAT EDITION (SIDELINES DROP UPDATE) 🐾🎃
+-- 🐾 EVA HUB V2.5 — SPOOKY CAT TABBED EDITION 🐱🎃
 -- ========================================================
-
-if getgenv().EvaHubCleanup then
-    pcall(getgenv().EvaHubCleanup)
-end
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local ParentGui = (pcall(function() return gethui() end) and gethui()) or CoreGui
 
--- Cleanup existing GUI on re-execute
-if PlayerGui:FindFirstChild("EvaHubCatGui") then
-    PlayerGui.EvaHubCatGui:Destroy()
+if getgenv().EvaHubCleanup then
+    pcall(getgenv().EvaHubCleanup)
 end
 
 local Connections, Tasks = {}, {}
 getgenv().EvaHubCleanup = function()
     for _, conn in pairs(Connections) do if conn then conn:Disconnect() end end
     for _, taskRef in pairs(Tasks) do if taskRef then pcall(task.cancel, taskRef) end end
-    table.clear(Connections)
-    table.clear(Tasks)
-    if PlayerGui:FindFirstChild("EvaHubCatGui") then PlayerGui.EvaHubCatGui:Destroy() end
+    table.clear(Connections); table.clear(Tasks)
+    if ParentGui:FindFirstChild("EvaHubCatGui") then ParentGui.EvaHubCatGui:Destroy() end
+    if ParentGui:FindFirstChild("EvaHubPlayerHPGui") then ParentGui.EvaHubPlayerHPGui:Destroy() end
 end
 
 --------------------------------------------------------------------------------
@@ -43,9 +40,7 @@ local function makeDraggable(guiFrame, dragHandle)
             dragStart = input.Position
             startPos = guiFrame.Position
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
@@ -65,455 +60,275 @@ local function makeDraggable(guiFrame, dragHandle)
 end
 
 --------------------------------------------------------------------------------
--- MAIN GUI CREATION
+-- MAIN GUI CREATION (TABBED LAYOUT)
 --------------------------------------------------------------------------------
-local EvaHubCatGui = Instance.new("ScreenGui")
-EvaHubCatGui.Name = "EvaHubCatGui"
-EvaHubCatGui.ResetOnSpawn = false
-EvaHubCatGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-EvaHubCatGui.Parent = PlayerGui
+local ScreenGui = Instance.new("ScreenGui", ParentGui)
+ScreenGui.Name = "EvaHubCatGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 100
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 520)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
+local ToggleIcon = Instance.new("TextButton", ScreenGui)
+ToggleIcon.Size = UDim2.new(0, 48, 0, 48)
+ToggleIcon.Position = UDim2.new(0, 15, 0.3, 0)
+ToggleIcon.BackgroundColor3 = Color3.fromRGB(35, 20, 50)
+ToggleIcon.Text = "🐾"
+ToggleIcon.TextSize = 24
+ToggleIcon.ZIndex = 200
+ToggleIcon.Active = true
+Instance.new("UICorner", ToggleIcon).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", ToggleIcon).Color = Color3.fromRGB(255, 120, 190)
+makeDraggable(ToggleIcon)
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.Size = UDim2.new(0, 720, 0, 480)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(24, 15, 32)
+MainFrame.ClipsDescendants = false
 MainFrame.Active = true
-MainFrame.Parent = EvaHubCatGui
+MainFrame.ZIndex = 10
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
+Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(255, 120, 190)
+makeDraggable(MainFrame)
 
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
-local MainStroke = Instance.new("UIStroke", MainFrame)
-MainStroke.Thickness = 2.5
-MainStroke.Color = Color3.fromRGB(255, 120, 190)
+Connections.KeybindToggle = UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.RightControl then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
 
--- Decorative Cat Ears
-local LeftEar = Instance.new("Frame")
-LeftEar.Size = UDim2.new(0, 42, 0, 42)
-LeftEar.Position = UDim2.new(0, 18, 0, -22)
-LeftEar.BackgroundColor3 = Color3.fromRGB(255, 120, 190)
-LeftEar.Rotation = -25
-LeftEar.ZIndex = 0
-LeftEar.Parent = MainFrame
-Instance.new("UICorner", LeftEar).CornerRadius = UDim.new(0, 10)
-
-local RightEar = Instance.new("Frame")
-RightEar.Size = UDim2.new(0, 42, 0, 42)
-RightEar.Position = UDim2.new(1, -60, 0, -22)
-RightEar.BackgroundColor3 = Color3.fromRGB(255, 120, 190)
-RightEar.Rotation = 25
-RightEar.ZIndex = 0
-RightEar.Parent = MainFrame
-Instance.new("UICorner", RightEar).CornerRadius = UDim.new(0, 10)
-
--- Title Bar
-local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 50)
+local TitleBar = Instance.new("Frame", MainFrame)
+TitleBar.Size = UDim2.new(1, 0, 0, 45)
 TitleBar.BackgroundColor3 = Color3.fromRGB(36, 20, 50)
-TitleBar.ZIndex = 10
-TitleBar.Parent = MainFrame
-Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 16)
+TitleBar.ZIndex = 11
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 14)
 
-makeDraggable(MainFrame, TitleBar)
+local TitleText = Instance.new("TextLabel", TitleBar)
+TitleText.Size = UDim2.new(0.7, 0, 1, 0); TitleText.Position = UDim2.new(0, 14, 0, 0)
+TitleText.BackgroundTransparency = 1; TitleText.Text = "🐾 EVA HUB — SPOOKY CAT EDITION (Right Ctrl to Hide)"
+TitleText.TextColor3 = Color3.fromRGB(255, 150, 210); TitleText.Font = Enum.Font.FredokaOne; TitleText.TextSize = 12
+TitleText.ZIndex = 12
 
-local TitleText = Instance.new("TextLabel")
-TitleText.Size = UDim2.new(0.8, 0, 1, 0)
-TitleText.Position = UDim2.new(0, 15, 0, 0)
-TitleText.BackgroundTransparency = 1
-TitleText.Text = "🐾 EVA HUB — SPOOKY CAT 🐱"
-TitleText.TextColor3 = Color3.fromRGB(255, 150, 210)
-TitleText.Font = Enum.Font.FredokaOne
-TitleText.TextSize = 16
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.ZIndex = 11
-TitleText.Parent = TitleBar
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 90)
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 14
+local CloseBtn = Instance.new("TextButton", TitleBar)
+CloseBtn.Size = UDim2.new(0, 26, 0, 26); CloseBtn.Position = UDim2.new(1, -38, 0.5, -13)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 90); CloseBtn.Text = "X"; CloseBtn.TextColor3 = Color3.new(1,1,1)
 CloseBtn.ZIndex = 12
-CloseBtn.Parent = TitleBar
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
-CloseBtn.Activated:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
+CloseBtn.Activated:Connect(function() MainFrame.Visible = false end)
+ToggleIcon.Activated:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
 
--- Scrolling Container
-local Scroll = Instance.new("ScrollingFrame")
-Scroll.Size = UDim2.new(1, -20, 1, -65)
-Scroll.Position = UDim2.new(0, 10, 0, 55)
-Scroll.BackgroundTransparency = 1
-Scroll.ScrollBarThickness = 5
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 120, 190)
-Scroll.Parent = MainFrame
+--------------------------------------------------------------------------------
+-- SIDEBAR TABS SYSTEM
+--------------------------------------------------------------------------------
+local Sidebar = Instance.new("Frame", MainFrame)
+Sidebar.Size = UDim2.new(0, 160, 1, -55)
+Sidebar.Position = UDim2.new(0, 15, 0, 50)
+Sidebar.BackgroundTransparency = 1
+Sidebar.ZIndex = 11
 
-local UIList = Instance.new("UIListLayout")
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Padding = UDim.new(0, 10)
-UIList.Parent = Scroll
+local SidebarList = Instance.new("UIListLayout", Sidebar)
+SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
+SidebarList.Padding = UDim.new(0, 6)
 
-UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
-end)
+local ContentArea = Instance.new("Frame", MainFrame)
+ContentArea.Size = UDim2.new(1, -200, 1, -60)
+ContentArea.Position = UDim2.new(0, 185, 0, 50)
+ContentArea.BackgroundColor3 = Color3.fromRGB(35, 18, 48)
+ContentArea.ZIndex = 11
+Instance.new("UICorner", ContentArea).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", ContentArea).Color = Color3.fromRGB(255, 120, 190)
 
-local function createButton(text, order)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 42)
+local TabFrames = {}
+local TabButtons = {}
+
+local function createTab(name, icon, order)
+    local btn = Instance.new("TextButton", Sidebar)
+    btn.Size = UDim2.new(1, 0, 0, 38)
     btn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = "   " .. icon .. "  " .. name
+    btn.TextColor3 = Color3.fromRGB(255, 180, 230)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 12
+    btn.TextXAlignment = Enum.TextXAlignment.Left
     btn.LayoutOrder = order
-    btn.Parent = Scroll
-    
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 1.5
-    stroke.Color = Color3.fromRGB(255, 120, 190)
+    btn.ZIndex = 12
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", btn).Color = Color3.fromRGB(255, 120, 190)
+
+    local page = Instance.new("ScrollingFrame", ContentArea)
+    page.Size = UDim2.new(1, -16, 1, -16)
+    page.Position = UDim2.new(0, 8, 0, 8)
+    page.BackgroundTransparency = 1
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = Color3.fromRGB(255, 120, 190)
+    page.Visible = false
+    page.ZIndex = 13
+
+    local pageList = Instance.new("UIListLayout", page)
+    pageList.SortOrder = Enum.SortOrder.LayoutOrder
+    pageList.Padding = UDim.new(0, 8)
+
+    pageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.new(0, 0, 0, pageList.AbsoluteContentSize.Y + 10)
+    end)
+
+    TabFrames[name] = page
+    TabButtons[name] = btn
+
+    btn.Activated:Connect(function()
+        for tName, tPage in pairs(TabFrames) do
+            tPage.Visible = (tName == name)
+            local tBtn = TabButtons[tName]
+            if tName == name then
+                tBtn.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
+                tBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                tBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+                tBtn.TextColor3 = Color3.fromRGB(255, 180, 230)
+            end
+        end
+    end)
+
+    return page
+end
+
+local InfoPage   = createTab("Info", "ℹ️", 1)
+local MainPage   = createTab("Main", "🐾", 2)
+local AutoPage   = createTab("Auto", "🔄", 3)
+local LuckPage   = createTab("Luck", "🍀", 4)
+local PlayerPage = createTab("Player", "🏃", 5)
+
+TabButtons["Main"].BackgroundColor3 = Color3.fromRGB(255, 110, 180)
+TabButtons["Main"].TextColor3 = Color3.fromRGB(255, 255, 255)
+TabFrames["Main"].Visible = true
+
+local function CreatePageBtn(parentPage, text, order)
+    local btn = Instance.new("TextButton", parentPage)
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = Color3.fromRGB(42, 24, 60); btn.Text = text; btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold; btn.TextSize = 11; btn.LayoutOrder = order; btn.ZIndex = 14
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    local stroke = Instance.new("UIStroke", btn); stroke.Thickness = 1; stroke.Color = Color3.fromRGB(255, 120, 190)
     return btn, stroke
 end
 
 --------------------------------------------------------------------------------
--- 1. REAL-TIME PLAYER HP BAR
+-- 1. INFO TAB CONTENT
 --------------------------------------------------------------------------------
-local HPFrame = Instance.new("Frame")
-HPFrame.Size = UDim2.new(1, 0, 0, 65)
-HPFrame.BackgroundColor3 = Color3.fromRGB(35, 18, 48)
-HPFrame.LayoutOrder = 1
-HPFrame.Parent = Scroll
-Instance.new("UICorner", HPFrame).CornerRadius = UDim.new(0, 10)
-local HPStroke = Instance.new("UIStroke", HPFrame)
-HPStroke.Thickness = 1.5
-HPStroke.Color = Color3.fromRGB(255, 120, 190)
+local InfoCard = Instance.new("Frame", InfoPage)
+InfoCard.Size = UDim2.new(1, 0, 0, 120)
+InfoCard.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+InfoCard.ZIndex = 14
+Instance.new("UICorner", InfoCard).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", InfoCard).Color = Color3.fromRGB(255, 120, 190)
 
-local HPLabel = Instance.new("TextLabel")
-HPLabel.Size = UDim2.new(1, -20, 0, 22)
-HPLabel.Position = UDim2.new(0, 10, 0, 6)
-HPLabel.BackgroundTransparency = 1
-HPLabel.Text = "🐾 CAT HEALTH (PLAYER HP)"
-HPLabel.TextColor3 = Color3.fromRGB(255, 160, 220)
-HPLabel.Font = Enum.Font.GothamBold
-HPLabel.TextSize = 12
-HPLabel.TextXAlignment = Enum.TextXAlignment.Left
-HPLabel.Parent = HPFrame
-
-local HPBarBg = Instance.new("Frame")
-HPBarBg.Size = UDim2.new(1, -20, 0, 18)
-HPBarBg.Position = UDim2.new(0, 10, 0, 32)
-HPBarBg.BackgroundColor3 = Color3.fromRGB(20, 10, 30)
-HPBarBg.Parent = HPFrame
-Instance.new("UICorner", HPBarBg).CornerRadius = UDim.new(0, 6)
-
-local HPBarFill = Instance.new("Frame")
-HPBarFill.Size = UDim2.new(1, 0, 1, 0)
-HPBarFill.BackgroundColor3 = Color3.fromRGB(255, 100, 180)
-HPBarFill.Parent = HPBarBg
-Instance.new("UICorner", HPBarFill).CornerRadius = UDim.new(0, 6)
-
-local HPText = Instance.new("TextLabel")
-HPText.Size = UDim2.new(1, 0, 1, 0)
-HPText.BackgroundTransparency = 1
-HPText.Text = "100 / 100 HP (100%)"
-HPText.TextColor3 = Color3.fromRGB(255, 255, 255)
-HPText.Font = Enum.Font.GothamBold
-HPText.TextSize = 10
-HPText.ZIndex = 2
-HPText.Parent = HPBarBg
-
-Connections.HPTracker = RunService.Heartbeat:Connect(function()
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        local curHP = math.clamp(hum.Health, 0, hum.MaxHealth)
-        local maxHP = math.max(hum.MaxHealth, 1)
-        local ratio = math.clamp(curHP / maxHP, 0, 1)
-        
-        TweenService:Create(HPBarFill, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(ratio, 0, 1, 0)
-        }):Play()
-        
-        HPText.Text = string.format("%d / %d HP (%d%%)", math.floor(curHP), math.floor(maxHP), math.floor(ratio * 100))
-    else
-        HPText.Text = "No Humanoid Found"
-    end
-end)
+local InfoLabel = Instance.new("TextLabel", InfoCard)
+InfoLabel.Size = UDim2.new(1, -20, 1, -20)
+InfoLabel.Position = UDim2.new(0, 10, 0, 10)
+InfoLabel.BackgroundTransparency = 1
+InfoLabel.Text = "🐾 EVA HUB V2.5 — SPOOKY CAT EDITION\n\nOwner: Hack_aas1\nUser: " .. LocalPlayer.Name .. "\nStatus: Ultimate Spooky Cat Edition"
+InfoLabel.TextColor3 = Color3.fromRGB(255, 180, 230)
+InfoLabel.Font = Enum.Font.GothamMedium
+InfoLabel.TextSize = 11
+InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+InfoLabel.ZIndex = 15
 
 --------------------------------------------------------------------------------
--- 2. 🦅 FLY HACK FEATURE
+-- 2. MAIN TAB CONTENT (HellsAwakening, AI Battle, SpawnDrop, DropItem)
 --------------------------------------------------------------------------------
-local FlyBtn, FlyStroke = createButton("🦅 FLY HACK: OFF", 2)
-local flyActive = false
-local flyBodyVel, flyBodyGyro
-
-FlyBtn.Activated:Connect(function()
-    flyActive = not flyActive
-    
-    if Connections.Fly then Connections.Fly:Disconnect() Connections.Fly = nil end
-    if flyBodyVel then flyBodyVel:Destroy() flyBodyVel = nil end
-    if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
-
-    if flyActive then
-        FlyBtn.Text = "🦅 FLY HACK: ON"
-        FlyBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
-        FlyStroke.Color = Color3.fromRGB(255, 160, 220)
-
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            flyBodyVel = Instance.new("BodyVelocity")
-            flyBodyVel.MaxForce = Vector3.new(1, 1, 1) * 1e6
-            flyBodyVel.Velocity = Vector3.zero
-            flyBodyVel.Parent = hrp
-
-            flyBodyGyro = Instance.new("BodyGyro")
-            flyBodyGyro.MaxTorque = Vector3.new(1, 1, 1) * 1e6
-            flyBodyGyro.CFrame = hrp.CFrame
-            flyBodyGyro.Parent = hrp
-
-            Connections.Fly = RunService.RenderStepped:Connect(function()
-                if not flyActive or not hrp or not flyBodyVel or not flyBodyGyro then return end
-                local camCF = Workspace.CurrentCamera.CFrame
-                flyBodyGyro.CFrame = camCF
-                local dir = Vector3.zero
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + camCF.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - camCF.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - camCF.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + camCF.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0, 1, 0) end
-                flyBodyVel.Velocity = (dir.Magnitude > 0) and (dir.Unit * 60) or Vector3.zero
-            end)
-        end
-    else
-        FlyBtn.Text = "🦅 FLY HACK: OFF"
-        FlyBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-        FlyStroke.Color = Color3.fromRGB(255, 120, 190)
-    end
-end)
-
---------------------------------------------------------------------------------
--- 3. 🔥 START HELLSAWAKENING MODE (StartMode Event Trigger)
---------------------------------------------------------------------------------
-local HellsBtn, HellsStroke = createButton("🔥 START HELLSAWAKENING MODE", 3)
-
+local HellsBtn, HellsStroke = CreatePageBtn(MainPage, "🔥 START HELLSAWAKENING MODE", 1)
 HellsBtn.Activated:Connect(function()
     local triggered = false
     local rakeModel = Workspace:FindFirstChild("the_rake", true) or Workspace:FindFirstChild("The_Rake", true) or Workspace:FindFirstChild("Rake", true)
-    
-    local startModeRemote = (rakeModel and rakeModel:FindFirstChild("StartMode", true))
-        or ReplicatedStorage:FindFirstChild("StartMode", true)
-        or Workspace:FindFirstChild("StartMode", true)
+    local startModeRemote = (rakeModel and rakeModel:FindFirstChild("StartMode", true)) or ReplicatedStorage:FindFirstChild("StartMode", true)
 
     if startModeRemote then
         if startModeRemote:IsA("RemoteEvent") then
             startModeRemote:FireServer("HellsAwakening")
-            startModeRemote:FireServer("HellsAwakeningMain")
             triggered = true
         elseif startModeRemote:IsA("BindableEvent") then
             startModeRemote:Fire("HellsAwakening")
-            startModeRemote:Fire("HellsAwakeningMain")
-            triggered = true
-        elseif startModeRemote:IsA("RemoteFunction") then
-            pcall(function() startModeRemote:InvokeServer("HellsAwakening") end)
             triggered = true
         end
     end
 
-    if not triggered then
-        for _, obj in pairs(game:GetDescendants()) do
-            if (obj:IsA("RemoteEvent") or obj:IsA("BindableEvent")) and obj.Name:lower():find("startmode") then
-                if obj:IsA("RemoteEvent") then
-                    obj:FireServer("HellsAwakening")
-                    obj:FireServer("HellsAwakeningMain")
-                else
-                    obj:Fire("HellsAwakening")
-                    obj:Fire("HellsAwakeningMain")
+    HellsBtn.Text = triggered and "🔥 HELLSAWAKENING STARTED!" or "⚠️ StartMode NOT FOUND!"
+    task.delay(1.5, function() HellsBtn.Text = "🔥 START HELLSAWAKENING MODE" end)
+end)
+
+local AiBattleBtn, AiBattleStroke = CreatePageBtn(MainPage, "🤖 AI BATTLE MODE: OFF", 2)
+local aiBattleActive = false
+AiBattleBtn.Activated:Connect(function()
+    aiBattleActive = not aiBattleActive
+    AiBattleBtn.Text = aiBattleActive and "🤖 AI BATTLE MODE: ON" or "🤖 AI BATTLE MODE: OFF"
+end)
+
+Connections.AiBattle = RunService.RenderStepped:Connect(function()
+    if aiBattleActive then
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            for _, model in pairs(Workspace:GetChildren()) do
+                if model:IsA("Model") and model ~= char and model:FindFirstChildOfClass("Humanoid") and model:FindFirstChild("HumanoidRootPart") then
+                    if not Players:GetPlayerFromCharacter(model) then
+                        hrp.CFrame = CFrame.new(model.HumanoidRootPart.Position + Vector3.new(0, 3, 5), model.HumanoidRootPart.Position)
+                        local tool = char:FindFirstChildOfClass("Tool")
+                        if tool then pcall(function() tool:Activate() end) end
+                        break
+                    end
                 end
-                triggered = true
             end
         end
     end
+end)
 
-    if triggered then
-        HellsBtn.Text = "🔥 HELLSAWAKENING STARTED!"
-        HellsBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
-        HellsStroke.Color = Color3.fromRGB(255, 160, 220)
-    else
-        HellsBtn.Text = "⚠️ StartMode EVENT NOT FOUND!"
-        HellsBtn.BackgroundColor3 = Color3.fromRGB(140, 40, 40)
-    end
+local DropRowFrame = Instance.new("Frame", MainPage)
+DropRowFrame.Size = UDim2.new(1, 0, 0, 36)
+DropRowFrame.BackgroundTransparency = 1
+DropRowFrame.LayoutOrder = 3
 
-    task.delay(1.5, function()
-        HellsBtn.Text = "🔥 START HELLSAWAKENING MODE"
-        HellsBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-        HellsStroke.Color = Color3.fromRGB(255, 120, 190)
-    end)
+local SpawnDropBtn = Instance.new("TextButton", DropRowFrame)
+SpawnDropBtn.Size = UDim2.new(0.48, 0, 1, 0)
+SpawnDropBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+SpawnDropBtn.Text = "📦 SPAWN DROP"
+SpawnDropBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpawnDropBtn.Font = Enum.Font.GothamBold
+SpawnDropBtn.TextSize = 11
+Instance.new("UICorner", SpawnDropBtn).CornerRadius = UDim.new(0, 6)
+
+local DropItemBtn = Instance.new("TextButton", DropRowFrame)
+DropItemBtn.Size = UDim2.new(0.48, 0, 1, 0)
+DropItemBtn.Position = UDim2.new(0.52, 0, 0, 0)
+DropItemBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+DropItemBtn.Text = "💥 DROP ITEM"
+DropItemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+DropItemBtn.Font = Enum.Font.GothamBold
+DropItemBtn.TextSize = 11
+Instance.new("UICorner", DropItemBtn).CornerRadius = UDim.new(0, 6)
+
+SpawnDropBtn.Activated:Connect(function()
+    local remote = ReplicatedStorage:FindFirstChild("SpawnDrop", true)
+    if remote and remote:IsA("RemoteEvent") then remote:FireServer() end
+    SpawnDropBtn.Text = "✅ FIRED!"
+    task.delay(1.5, function() SpawnDropBtn.Text = "📦 SPAWN DROP" end)
+end)
+
+DropItemBtn.Activated:Connect(function()
+    local remote = ReplicatedStorage:FindFirstChild("DropItem", true)
+    if remote and remote:IsA("RemoteEvent") then remote:FireServer() end
+    DropItemBtn.Text = "✅ FIRED!"
+    task.delay(1.5, function() DropItemBtn.Text = "💥 DROP ITEM" end)
 end)
 
 --------------------------------------------------------------------------------
--- 4. ⚡ SPEED CHANGER
+-- 3. AUTO TAB CONTENT (Auto Pickup, Givers ESP, Food/Megafish Nametags)
 --------------------------------------------------------------------------------
-local SpeedFrame = Instance.new("Frame")
-SpeedFrame.Size = UDim2.new(1, 0, 0, 75)
-SpeedFrame.BackgroundColor3 = Color3.fromRGB(35, 18, 48)
-SpeedFrame.LayoutOrder = 4
-SpeedFrame.Parent = Scroll
-Instance.new("UICorner", SpeedFrame).CornerRadius = UDim.new(0, 10)
-local SpeedStroke = Instance.new("UIStroke", SpeedFrame)
-SpeedStroke.Thickness = 1.5
-SpeedStroke.Color = Color3.fromRGB(255, 120, 190)
-
-local SpeedTitle = Instance.new("TextLabel")
-SpeedTitle.Size = UDim2.new(1, -10, 0, 20)
-SpeedTitle.Position = UDim2.new(0, 10, 0, 5)
-SpeedTitle.BackgroundTransparency = 1
-SpeedTitle.Text = "⚡ SPEED CHANGER"
-SpeedTitle.TextColor3 = Color3.fromRGB(255, 160, 220)
-SpeedTitle.Font = Enum.Font.GothamBold
-SpeedTitle.TextSize = 12
-SpeedTitle.TextXAlignment = Enum.TextXAlignment.Left
-SpeedTitle.Parent = SpeedFrame
-
-local SpeedInput = Instance.new("TextBox")
-SpeedInput.Size = UDim2.new(0.42, 0, 0, 32)
-SpeedInput.Position = UDim2.new(0, 10, 0, 30)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(22, 10, 32)
-SpeedInput.Text = "50"
-SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedInput.Font = Enum.Font.GothamBold
-SpeedInput.TextSize = 13
-SpeedInput.Parent = SpeedFrame
-Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
-
-local ApplySpeedBtn = Instance.new("TextButton")
-ApplySpeedBtn.Size = UDim2.new(0.25, 0, 0, 32)
-ApplySpeedBtn.Position = UDim2.new(0.45, 5, 0, 30)
-ApplySpeedBtn.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
-ApplySpeedBtn.Text = "SET"
-ApplySpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ApplySpeedBtn.Font = Enum.Font.GothamBold
-ApplySpeedBtn.TextSize = 12
-ApplySpeedBtn.Parent = SpeedFrame
-Instance.new("UICorner", ApplySpeedBtn).CornerRadius = UDim.new(0, 8)
-
-local ResetSpeedBtn = Instance.new("TextButton")
-ResetSpeedBtn.Size = UDim2.new(0.22, 0, 0, 32)
-ResetSpeedBtn.Position = UDim2.new(0.72, 5, 0, 30)
-ResetSpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 70)
-ResetSpeedBtn.Text = "RESET"
-ResetSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ResetSpeedBtn.Font = Enum.Font.GothamBold
-ResetSpeedBtn.TextSize = 11
-ResetSpeedBtn.Parent = SpeedFrame
-Instance.new("UICorner", ResetSpeedBtn).CornerRadius = UDim.new(0, 8)
-
-local currentSpeedVal = nil
-
-ApplySpeedBtn.Activated:Connect(function()
-    local val = tonumber(SpeedInput.Text)
-    if val then
-        currentSpeedVal = val
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = val end
-        ApplySpeedBtn.Text = "DONE!"
-        task.delay(1, function() ApplySpeedBtn.Text = "SET" end)
-    end
-end)
-
-ResetSpeedBtn.Activated:Connect(function()
-    currentSpeedVal = nil
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then hum.WalkSpeed = 16 end
-    ResetSpeedBtn.Text = "16"
-    task.delay(1, function() ResetSpeedBtn.Text = "RESET" end)
-end)
-
-Connections.SpeedLock = RunService.Heartbeat:Connect(function()
-    if currentSpeedVal then
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.WalkSpeed ~= currentSpeedVal then
-            hum.WalkSpeed = currentSpeedVal
-        end
-    end
-end)
-
---------------------------------------------------------------------------------
--- 5. 🐱 MEOW I'M BRUH HOUR ANIMATION
---------------------------------------------------------------------------------
-local MeowBtn = createButton("🐱 MEOW I'M BRUH HOUR! 🐾", 5)
-
-MeowBtn.Activated:Connect(function()
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if hrp then
-        task.spawn(function()
-            for _ = 1, 12 do
-                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(30), 0) + Vector3.new(0, 0.3, 0)
-                task.wait(0.02)
-            end
-        end)
-    end
-
-    local Banner = Instance.new("TextLabel")
-    Banner.Size = UDim2.new(0, 310, 0, 55)
-    Banner.Position = UDim2.new(0.5, -155, 0.2, 0)
-    Banner.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
-    Banner.Text = "🐱 MEOW I'M BRUH HOUR! 🐾"
-    Banner.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Banner.Font = Enum.Font.FredokaOne
-    Banner.TextSize = 18
-    Banner.ZIndex = 100
-    Banner.Parent = EvaHubCatGui
-    
-    Instance.new("UICorner", Banner).CornerRadius = UDim.new(0, 14)
-    local BannerStroke = Instance.new("UIStroke", Banner)
-    BannerStroke.Thickness = 2.5
-    BannerStroke.Color = Color3.fromRGB(255, 255, 255)
-
-    Banner.Size = UDim2.new(0, 0, 0, 0)
-    TweenService:Create(Banner, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 310, 0, 55)
-    }):Play()
-
-    task.delay(1.6, function()
-        if Banner and Banner.Parent then
-            local fade = TweenService:Create(Banner, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Size = UDim2.new(0, 0, 0, 0),
-                BackgroundTransparency = 1,
-                TextTransparency = 1
-            })
-            fade:Play()
-            fade.Completed:Connect(function()
-                Banner:Destroy()
-            end)
-        end
-    end)
-end)
-
---------------------------------------------------------------------------------
--- 6. 🦇 DELAY AUTO PICKUP (0.5s)
---------------------------------------------------------------------------------
-local AutoPickupBtn, AutoPickupStroke = createButton("🦇 AUTO PICKUP: OFF (0.5s)", 6)
+local AutoPickupBtn, AutoPickupStroke = CreatePageBtn(AutoPage, "🦇 AUTO PICKUP: OFF (0.5s)", 1)
 local autoPickupActive = false
-
 AutoPickupBtn.Activated:Connect(function()
     autoPickupActive = not autoPickupActive
-    if autoPickupActive then
-        AutoPickupBtn.Text = "🦇 AUTO PICKUP: ON (0.5s)"
-        AutoPickupBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
-        AutoPickupStroke.Color = Color3.fromRGB(255, 160, 220)
-    else
-        AutoPickupBtn.Text = "🦇 AUTO PICKUP: OFF (0.5s)"
-        AutoPickupBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-        AutoPickupStroke.Color = Color3.fromRGB(255, 120, 190)
-    end
+    AutoPickupBtn.Text = autoPickupActive and "🦇 AUTO PICKUP: ON (0.5s)" or "🦇 AUTO PICKUP: OFF (0.5s)"
 end)
 
 Tasks.AutoPickup = task.spawn(function()
@@ -525,14 +340,10 @@ Tasks.AutoPickup = task.spawn(function()
             if hrp then
                 for _, obj in pairs(Workspace:GetChildren()) do
                     if obj:IsA("Tool") and obj:FindFirstChild("Handle") then
-                        if typeof(firetouchinterest) == "function" then
-                            pcall(function()
-                                firetouchinterest(hrp, obj.Handle, 0)
-                                firetouchinterest(hrp, obj.Handle, 1)
-                            end)
-                        else
-                            pcall(function() obj.Handle.CFrame = hrp.CFrame end)
-                        end
+                        pcall(function()
+                            firetouchinterest(hrp, obj.Handle, 0)
+                            firetouchinterest(hrp, obj.Handle, 1)
+                        end)
                     end
                 end
             end
@@ -540,206 +351,128 @@ Tasks.AutoPickup = task.spawn(function()
     end
 end)
 
---------------------------------------------------------------------------------
--- 7. 🤖 AI BATTLE
---------------------------------------------------------------------------------
-local AiBattleBtn, AiBattleStroke = createButton("🤖 AI BATTLE MODE: OFF", 7)
-local aiBattleActive = false
+local NametagBtn, NametagStroke = CreatePageBtn(AutoPage, "🏷️ FOOD & MEGAFISH NAMETAGS: OFF", 2)
+local nametagsEnabled = false
+NametagBtn.Activated:Connect(function()
+    nametagsEnabled = not nametagsEnabled
+    NametagBtn.Text = nametagsEnabled and "🏷️ FOOD & MEGAFISH NAMETAGS: ON" or "🏷️ FOOD & MEGAFISH NAMETAGS: OFF"
+end)
 
-AiBattleBtn.Activated:Connect(function()
-    aiBattleActive = not aiBattleActive
-    if aiBattleActive then
-        AiBattleBtn.Text = "🤖 AI BATTLE MODE: ON"
-        AiBattleBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
-        AiBattleStroke.Color = Color3.fromRGB(255, 160, 220)
-    else
-        AiBattleBtn.Text = "🤖 AI BATTLE MODE: OFF"
-        AiBattleBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-        AiBattleStroke.Color = Color3.fromRGB(255, 120, 190)
+local function isNokia(item)
+    return item.Name:lower():find("nokia") ~= nil
+end
+
+local function isFoodOrFish(item)
+    local n = item.Name:lower()
+    return not isNokia(item) and (n:find("fish") or n:find("megafish") or n:find("food") or n:find("burger") or n:find("apple") or n:find("pizza") or n:find("meat"))
+end
+
+task.spawn(function()
+    while true do
+        if nametagsEnabled then
+            pcall(function()
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    if (obj:IsA("BasePart") or obj:IsA("Model")) and isFoodOrFish(obj) then
+                        local targetPart = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")) or obj
+                        if targetPart and not targetPart:FindFirstChild("FoodFishNametag") then
+                            local bg = Instance.new("BillboardGui", targetPart)
+                            bg.Name = "FoodFishNametag"
+                            bg.Size = UDim2.new(0, 120, 0, 40)
+                            bg.StudsOffset = Vector3.new(0, 2.5, 0)
+                            bg.AlwaysOnTop = true
+                            
+                            local lbl = Instance.new("TextLabel", bg)
+                            lbl.Size = UDim2.new(1, 0, 1, 0)
+                            lbl.BackgroundTransparency = 1
+                            lbl.Text = obj.Name
+                            lbl.TextColor3 = Color3.fromRGB(0, 255, 200)
+                            lbl.TextStrokeTransparency = 0
+                            lbl.Font = Enum.Font.GothamBold
+                            lbl.TextSize = 12
+                        end
+                    end
+                end
+            end)
+            task.wait(1)
+        else
+            pcall(function()
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    local tag = obj:FindFirstChild("FoodFishNametag")
+                    if tag then tag:Destroy() end
+                end
+            end)
+            task.wait(1)
+        end
     end
 end)
 
-Connections.AiBattle = RunService.RenderStepped:Connect(function()
-    if aiBattleActive then
+--------------------------------------------------------------------------------
+-- 4. LUCK TAB CONTENT
+--------------------------------------------------------------------------------
+local Luck250Btn, Luck250Stroke = CreatePageBtn(LuckPage, "🍀 Luck 250x: OFF", 1)
+local luckActive = false
+Luck250Btn.Activated:Connect(function()
+    luckActive = not luckActive
+    Luck250Btn.Text = luckActive and "🍀 Luck 250x: ON" or "🍀 Luck 250x: OFF"
+end)
+
+task.spawn(function()
+    while true do
+        if luckActive then
+            pcall(function()
+                LocalPlayer:SetAttribute("Luck", 250)
+                LocalPlayer:SetAttribute("LuckMultiplier", 250)
+            end)
+        end
+        task.wait(0.5)
+    end
+end)
+
+--------------------------------------------------------------------------------
+-- 5. PLAYER TAB CONTENT (Fly, Speed, Noclip, InfJump)
+--------------------------------------------------------------------------------
+local FlyBtn, FlyStroke = CreatePageBtn(PlayerPage, "🦅 FLY HACK: OFF", 1)
+local flyActive = false
+local flyBodyVel, flyBodyGyro
+
+FlyBtn.Activated:Connect(function()
+    flyActive = not flyActive
+    if Connections.Fly then Connections.Fly:Disconnect() Connections.Fly = nil end
+    if flyBodyVel then flyBodyVel:Destroy() flyBodyVel = nil end
+    if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
+
+    if flyActive then
+        FlyBtn.Text = "🦅 FLY HACK: ON"
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
-            local closestNpc = nil
-            local closestDist = math.huge
-            for _, model in pairs(Workspace:GetChildren()) do
-                if model:IsA("Model") and model ~= char and model:FindFirstChildOfClass("Humanoid") and model:FindFirstChild("HumanoidRootPart") then
-                    if not Players:GetPlayerFromCharacter(model) then
-                        local dist = (model.HumanoidRootPart.Position - hrp.Position).Magnitude
-                        if dist < closestDist then
-                            closestDist = dist
-                            closestNpc = model
-                        end
-                    end
-                end
-            end
-            if closestNpc and closestNpc:FindFirstChild("HumanoidRootPart") then
-                local angle = tick() * 10
-                hrp.CFrame = CFrame.new(closestNpc.HumanoidRootPart.Position + Vector3.new(math.cos(angle) * 7, 2, math.sin(angle) * 7), closestNpc.HumanoidRootPart.Position)
-                local tool = char:FindFirstChildOfClass("Tool")
-                if tool then pcall(function() tool:Activate() end) end
-            end
+            flyBodyVel = Instance.new("BodyVelocity", hrp)
+            flyBodyVel.MaxForce = Vector3.new(1, 1, 1) * 1e6
+            flyBodyVel.Velocity = Vector3.zero
+
+            flyBodyGyro = Instance.new("BodyGyro", hrp)
+            flyBodyGyro.MaxTorque = Vector3.new(1, 1, 1) * 1e6
+            flyBodyGyro.CFrame = hrp.CFrame
+
+            Connections.Fly = RunService.RenderStepped:Connect(function()
+                local camCF = Workspace.CurrentCamera.CFrame
+                flyBodyGyro.CFrame = camCF
+                local dir = Vector3.zero
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + camCF.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - camCF.LookVector end
+                flyBodyVel.Velocity = (dir.Magnitude > 0) and (dir.Unit * 60) or Vector3.zero
+            end)
         end
-    end
-end)
-
---------------------------------------------------------------------------------
--- 8. 📦 SIDE-BY-SIDE DROP EVENTS (SpawnDrop & DropItem)
---------------------------------------------------------------------------------
-local DropRowFrame = Instance.new("Frame")
-DropRowFrame.Size = UDim2.new(1, 0, 0, 42)
-DropRowFrame.BackgroundTransparency = 1
-DropRowFrame.LayoutOrder = 8
-DropRowFrame.Parent = Scroll
-
-local SpawnDropBtn = Instance.new("TextButton")
-SpawnDropBtn.Size = UDim2.new(0.48, 0, 1, 0)
-SpawnDropBtn.Position = UDim2.new(0, 0, 0, 0)
-SpawnDropBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-SpawnDropBtn.Text = "📦 SPAWN DROP"
-SpawnDropBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpawnDropBtn.Font = Enum.Font.GothamBold
-SpawnDropBtn.TextSize = 11
-SpawnDropBtn.Parent = DropRowFrame
-Instance.new("UICorner", SpawnDropBtn).CornerRadius = UDim.new(0, 10)
-local SpawnDropStroke = Instance.new("UIStroke", SpawnDropBtn)
-SpawnDropStroke.Thickness = 1.5
-SpawnDropStroke.Color = Color3.fromRGB(255, 120, 190)
-
-local DropItemBtn = Instance.new("TextButton")
-DropItemBtn.Size = UDim2.new(0.48, 0, 1, 0)
-DropItemBtn.Position = UDim2.new(0.52, 0, 0, 0)
-DropItemBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-DropItemBtn.Text = "💥 DROP ITEM"
-DropItemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-DropItemBtn.Font = Enum.Font.GothamBold
-DropItemBtn.TextSize = 11
-DropItemBtn.Parent = DropRowFrame
-Instance.new("UICorner", DropItemBtn).CornerRadius = UDim.new(0, 10)
-local DropItemStroke = Instance.new("UIStroke", DropItemBtn)
-DropItemStroke.Thickness = 1.5
-DropItemStroke.Color = Color3.fromRGB(255, 120, 190)
-
-SpawnDropBtn.Activated:Connect(function()
-    local char = LocalPlayer.Character
-    local pos = char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.CFrame or CFrame.new()
-    local remote = ReplicatedStorage:FindFirstChild("SpawnDrop", true) or Workspace:FindFirstChild("SpawnDrop", true)
-    if remote and remote:IsA("RemoteEvent") then
-        local tool = char and char:FindFirstChildOfClass("Tool")
-        remote:FireServer(tool and tool.Name or "Drop", pos)
-        SpawnDropBtn.Text = "✅ FIRED SpawnDrop!"
     else
-        local found = false
-        for _, v in pairs(game:GetDescendants()) do
-            if v:IsA("RemoteEvent") and v.Name:lower() == "spawndrop" then
-                v:FireServer()
-                found = true
-            end
-        end
-        SpawnDropBtn.Text = found and "✅ FIRED!" or "⚠️ NOT FOUND"
-    end
-    task.delay(1.5, function() SpawnDropBtn.Text = "📦 SPAWN DROP" end)
-end)
-
-DropItemBtn.Activated:Connect(function()
-    local char = LocalPlayer.Character
-    local pos = char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.CFrame or CFrame.new()
-    local remote = ReplicatedStorage:FindFirstChild("DropItem", true) or Workspace:FindFirstChild("DropItem", true)
-    if remote and remote:IsA("RemoteEvent") then
-        local tool = char and char:FindFirstChildOfClass("Tool")
-        remote:FireServer(tool and tool.Name or "Drop", pos)
-        DropItemBtn.Text = "✅ FIRED DropItem!"
-    else
-        local found = false
-        for _, v in pairs(game:GetDescendants()) do
-            if v:IsA("RemoteEvent") and v.Name:lower() == "dropitem" then
-                v:FireServer()
-                found = true
-            end
-        end
-        DropItemBtn.Text = found and "✅ FIRED!" or "⚠️ NOT FOUND"
-    end
-    task.delay(1.5, function() DropItemBtn.Text = "💥 DROP ITEM" end)
-end)
-
---------------------------------------------------------------------------------
--- 9. 👁️ PLAYER & RAKE ESP
---------------------------------------------------------------------------------
-local EspBtn, EspStroke = createButton("👁️ ESP HIGHLIGHT: OFF", 9)
-local espActive = false
-
-EspBtn.Activated:Connect(function()
-    espActive = not espActive
-    if espActive then
-        EspBtn.Text = "👁️ ESP HIGHLIGHT: ON"
-        EspBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
-        EspStroke.Color = Color3.fromRGB(255, 160, 220)
-    else
-        EspBtn.Text = "👁️ ESP HIGHLIGHT: OFF"
-        EspBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-        EspStroke.Color = Color3.fromRGB(255, 120, 190)
-        for _, p in pairs(Players:GetPlayers()) do
-            if p.Character and p.Character:FindFirstChild("EvaEsp") then
-                p.Character.EvaEsp:Destroy()
-            end
-        end
-        for _, m in pairs(Workspace:GetDescendants()) do
-            if m:IsA("Model") and (m.Name:lower():find("rake") or m.Name:lower():find("rakoof")) then
-                if m:FindFirstChild("EvaEsp") then m.EvaEsp:Destroy() end
-            end
-        end
+        FlyBtn.Text = "🦅 FLY HACK: OFF"
     end
 end)
 
-Connections.EspLoop = RunService.Heartbeat:Connect(function()
-    if espActive then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                local char = p.Character
-                if not char:FindFirstChild("EvaEsp") then
-                    local hl = Instance.new("Highlight")
-                    hl.Name = "EvaEsp"
-                    hl.FillColor = Color3.fromRGB(0, 255, 200)
-                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    hl.Parent = char
-                end
-            end
-        end
-        for _, m in pairs(Workspace:GetDescendants()) do
-            if m:IsA("Model") and (m.Name:lower():find("rake") or m.Name:lower():find("rakoof")) then
-                if not m:FindFirstChild("EvaEsp") then
-                    local hl = Instance.new("Highlight")
-                    hl.Name = "EvaEsp"
-                    hl.FillColor = Color3.fromRGB(255, 50, 50)
-                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    hl.Parent = m
-                end
-            end
-        end
-    end
-end)
-
---------------------------------------------------------------------------------
--- 10. 👻 NOCLIP (GHOST WALK)
---------------------------------------------------------------------------------
-local NoclipBtn, NoclipStroke = createButton("👻 GHOST NOCLIP: OFF", 10)
+local NoclipBtn, NoclipStroke = CreatePageBtn(PlayerPage, "👻 GHOST NOCLIP: OFF", 2)
 local noclipActive = false
-
 NoclipBtn.Activated:Connect(function()
     noclipActive = not noclipActive
-    if noclipActive then
-        NoclipBtn.Text = "👻 GHOST NOCLIP: ON"
-        NoclipBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
-        NoclipStroke.Color = Color3.fromRGB(255, 160, 220)
-    else
-        NoclipBtn.Text = "👻 GHOST NOCLIP: OFF"
-        NoclipBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-        NoclipStroke.Color = Color3.fromRGB(255, 120, 190)
-    end
+    NoclipBtn.Text = noclipActive and "👻 GHOST NOCLIP: ON" or "👻 GHOST NOCLIP: OFF"
 end)
 
 Connections.Noclip = RunService.Stepped:Connect(function()
@@ -747,50 +480,22 @@ Connections.Noclip = RunService.Stepped:Connect(function()
         local char = LocalPlayer.Character
         if char then
             for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
+                if part:IsA("BasePart") then part.CanCollide = false end
             end
         end
     end
 end)
 
---------------------------------------------------------------------------------
--- 11. 🦘 INFINITE JUMP
---------------------------------------------------------------------------------
-local InfJumpBtn, InfJumpStroke = createButton("🦘 INFINITE JUMP: OFF", 11)
+local InfJumpBtn, InfJumpStroke = CreatePageBtn(PlayerPage, "🦘 INFINITE JUMP: OFF", 3)
 local infJumpActive = false
-
 InfJumpBtn.Activated:Connect(function()
     infJumpActive = not infJumpActive
-    if infJumpActive then
-        InfJumpBtn.Text = "🦘 INFINITE JUMP: ON"
-        InfJumpBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
-        InfJumpStroke.Color = Color3.fromRGB(255, 160, 220)
-    else
-        InfJumpBtn.Text = "🦘 INFINITE JUMP: OFF"
-        InfJumpBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-        InfJumpStroke.Color = Color3.fromRGB(255, 120, 190)
-    end
+    InfJumpBtn.Text = infJumpActive and "🦘 INFINITE JUMP: ON" or "🦘 INFINITE JUMP: OFF"
 end)
 
 Connections.InfJump = UserInputService.JumpRequest:Connect(function()
     if infJumpActive then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end
-end)
-
---------------------------------------------------------------------------------
--- ANIMATED TITLE ICONS
---------------------------------------------------------------------------------
-Tasks.TitleAnim = task.spawn(function()
-    local catIcons = {"🐾", "🐱", "🎃", "👻", "🦇", "🍬"}
-    while true do
-        task.wait(2)
-        local icon = catIcons[math.random(1, #catIcons)]
-        TitleText.Text = icon .. " EVA HUB — SPOOKY CAT " .. icon
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
