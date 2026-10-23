@@ -1,5 +1,5 @@
 -- ========================================================
--- 🐱 EVA HUB V2.5 — SPOOKY CAT EDITION 🐾🎃
+-- 🐱 EVA HUB V2.5 — SPOOKY CAT EDITION (SIDELINES DROP UPDATE) 🐾🎃
 -- ========================================================
 
 if getgenv().EvaHubCleanup then
@@ -588,38 +588,199 @@ Connections.AiBattle = RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------------------------------------
--- 8. 💥 FORCE DROP (TRIGGER SpawnItem REMOTE)
+-- 8. 📦 SIDE-BY-SIDE DROP EVENTS (SpawnDrop & DropItem)
 --------------------------------------------------------------------------------
-local ForceDropBtn = createButton("💥 FORCE DROP (TRIGGER SpawnItem)", 8)
+local DropRowFrame = Instance.new("Frame")
+DropRowFrame.Size = UDim2.new(1, 0, 0, 42)
+DropRowFrame.BackgroundTransparency = 1
+DropRowFrame.LayoutOrder = 8
+DropRowFrame.Parent = Scroll
 
-ForceDropBtn.Activated:Connect(function()
+local SpawnDropBtn = Instance.new("TextButton")
+SpawnDropBtn.Size = UDim2.new(0.48, 0, 1, 0)
+SpawnDropBtn.Position = UDim2.new(0, 0, 0, 0)
+SpawnDropBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+SpawnDropBtn.Text = "📦 SPAWN DROP"
+SpawnDropBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpawnDropBtn.Font = Enum.Font.GothamBold
+SpawnDropBtn.TextSize = 11
+SpawnDropBtn.Parent = DropRowFrame
+Instance.new("UICorner", SpawnDropBtn).CornerRadius = UDim.new(0, 10)
+local SpawnDropStroke = Instance.new("UIStroke", SpawnDropBtn)
+SpawnDropStroke.Thickness = 1.5
+SpawnDropStroke.Color = Color3.fromRGB(255, 120, 190)
+
+local DropItemBtn = Instance.new("TextButton")
+DropItemBtn.Size = UDim2.new(0.48, 0, 1, 0)
+DropItemBtn.Position = UDim2.new(0.52, 0, 0, 0)
+DropItemBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+DropItemBtn.Text = "💥 DROP ITEM"
+DropItemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+DropItemBtn.Font = Enum.Font.GothamBold
+DropItemBtn.TextSize = 11
+DropItemBtn.Parent = DropRowFrame
+Instance.new("UICorner", DropItemBtn).CornerRadius = UDim.new(0, 10)
+local DropItemStroke = Instance.new("UIStroke", DropItemBtn)
+DropItemStroke.Thickness = 1.5
+DropItemStroke.Color = Color3.fromRGB(255, 120, 190)
+
+SpawnDropBtn.Activated:Connect(function()
     local char = LocalPlayer.Character
     local pos = char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.CFrame or CFrame.new()
-
-    local remote = ReplicatedStorage:FindFirstChild("SpawnItem", true) or Workspace:FindFirstChild("SpawnItem", true)
-    if remote then
-        if remote:IsA("RemoteEvent") then
-            local tool = char and char:FindFirstChildOfClass("Tool")
-            remote:FireServer(tool and tool.Name or "Drop", pos)
-            ForceDropBtn.Text = "💥 FIRED SpawnItem REMOTE!"
-        elseif remote:IsA("RemoteFunction") then
-            remote:InvokeServer("Drop", pos)
-            ForceDropBtn.Text = "💥 INVOKED SpawnItem REMOTE!"
-        end
+    local remote = ReplicatedStorage:FindFirstChild("SpawnDrop", true) or Workspace:FindFirstChild("SpawnDrop", true)
+    if remote and remote:IsA("RemoteEvent") then
+        local tool = char and char:FindFirstChildOfClass("Tool")
+        remote:FireServer(tool and tool.Name or "Drop", pos)
+        SpawnDropBtn.Text = "✅ FIRED SpawnDrop!"
     else
         local found = false
         for _, v in pairs(game:GetDescendants()) do
-            if v:IsA("RemoteEvent") and v.Name:lower():find("spawnitem") then
+            if v:IsA("RemoteEvent") and v.Name:lower() == "spawndrop" then
                 v:FireServer()
                 found = true
             end
         end
-        ForceDropBtn.Text = found and "💥 TRIGGERED SpawnItem EVENT!" or "⚠️ SpawnItem REMOTE NOT FOUND!"
+        SpawnDropBtn.Text = found and "✅ FIRED!" or "⚠️ NOT FOUND"
     end
+    task.delay(1.5, function() SpawnDropBtn.Text = "📦 SPAWN DROP" end)
+end)
 
-    task.delay(1.5, function()
-        ForceDropBtn.Text = "💥 FORCE DROP (TRIGGER SpawnItem)"
-    end)
+DropItemBtn.Activated:Connect(function()
+    local char = LocalPlayer.Character
+    local pos = char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.CFrame or CFrame.new()
+    local remote = ReplicatedStorage:FindFirstChild("DropItem", true) or Workspace:FindFirstChild("DropItem", true)
+    if remote and remote:IsA("RemoteEvent") then
+        local tool = char and char:FindFirstChildOfClass("Tool")
+        remote:FireServer(tool and tool.Name or "Drop", pos)
+        DropItemBtn.Text = "✅ FIRED DropItem!"
+    else
+        local found = false
+        for _, v in pairs(game:GetDescendants()) do
+            if v:IsA("RemoteEvent") and v.Name:lower() == "dropitem" then
+                v:FireServer()
+                found = true
+            end
+        end
+        DropItemBtn.Text = found and "✅ FIRED!" or "⚠️ NOT FOUND"
+    end
+    task.delay(1.5, function() DropItemBtn.Text = "💥 DROP ITEM" end)
+end)
+
+--------------------------------------------------------------------------------
+-- 9. 👁️ PLAYER & RAKE ESP
+--------------------------------------------------------------------------------
+local EspBtn, EspStroke = createButton("👁️ ESP HIGHLIGHT: OFF", 9)
+local espActive = false
+
+EspBtn.Activated:Connect(function()
+    espActive = not espActive
+    if espActive then
+        EspBtn.Text = "👁️ ESP HIGHLIGHT: ON"
+        EspBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
+        EspStroke.Color = Color3.fromRGB(255, 160, 220)
+    else
+        EspBtn.Text = "👁️ ESP HIGHLIGHT: OFF"
+        EspBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+        EspStroke.Color = Color3.fromRGB(255, 120, 190)
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("EvaEsp") then
+                p.Character.EvaEsp:Destroy()
+            end
+        end
+        for _, m in pairs(Workspace:GetDescendants()) do
+            if m:IsA("Model") and (m.Name:lower():find("rake") or m.Name:lower():find("rakoof")) then
+                if m:FindFirstChild("EvaEsp") then m.EvaEsp:Destroy() end
+            end
+        end
+    end
+end)
+
+Connections.EspLoop = RunService.Heartbeat:Connect(function()
+    if espActive then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                local char = p.Character
+                if not char:FindFirstChild("EvaEsp") then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "EvaEsp"
+                    hl.FillColor = Color3.fromRGB(0, 255, 200)
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.Parent = char
+                end
+            end
+        end
+        for _, m in pairs(Workspace:GetDescendants()) do
+            if m:IsA("Model") and (m.Name:lower():find("rake") or m.Name:lower():find("rakoof")) then
+                if not m:FindFirstChild("EvaEsp") then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "EvaEsp"
+                    hl.FillColor = Color3.fromRGB(255, 50, 50)
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.Parent = m
+                end
+            end
+        end
+    end
+end)
+
+--------------------------------------------------------------------------------
+-- 10. 👻 NOCLIP (GHOST WALK)
+--------------------------------------------------------------------------------
+local NoclipBtn, NoclipStroke = createButton("👻 GHOST NOCLIP: OFF", 10)
+local noclipActive = false
+
+NoclipBtn.Activated:Connect(function()
+    noclipActive = not noclipActive
+    if noclipActive then
+        NoclipBtn.Text = "👻 GHOST NOCLIP: ON"
+        NoclipBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
+        NoclipStroke.Color = Color3.fromRGB(255, 160, 220)
+    else
+        NoclipBtn.Text = "👻 GHOST NOCLIP: OFF"
+        NoclipBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+        NoclipStroke.Color = Color3.fromRGB(255, 120, 190)
+    end
+end)
+
+Connections.Noclip = RunService.Stepped:Connect(function()
+    if noclipActive then
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+--------------------------------------------------------------------------------
+-- 11. 🦘 INFINITE JUMP
+--------------------------------------------------------------------------------
+local InfJumpBtn, InfJumpStroke = createButton("🦘 INFINITE JUMP: OFF", 11)
+local infJumpActive = false
+
+InfJumpBtn.Activated:Connect(function()
+    infJumpActive = not infJumpActive
+    if infJumpActive then
+        InfJumpBtn.Text = "🦘 INFINITE JUMP: ON"
+        InfJumpBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 140)
+        InfJumpStroke.Color = Color3.fromRGB(255, 160, 220)
+    else
+        InfJumpBtn.Text = "🦘 INFINITE JUMP: OFF"
+        InfJumpBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
+        InfJumpStroke.Color = Color3.fromRGB(255, 120, 190)
+    end
+end)
+
+Connections.InfJump = UserInputService.JumpRequest:Connect(function()
+    if infJumpActive then
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
 end)
 
 --------------------------------------------------------------------------------
