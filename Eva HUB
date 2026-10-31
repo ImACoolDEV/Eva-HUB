@@ -1,335 +1,105 @@
--- ========================================================
--- 🐾 EVA HUB V2.5 — SPOOKY CAT EDITION (GLOBAL CHAT INCLUDED) 🐱🎃
--- ========================================================
-
+-- Simple Luau GUI for Roblox with Smooth Dragging
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
-local CoreGui = game:GetService("CoreGui")
-local HttpService = game:GetService("HttpService")
 
-local LocalPlayer = Players.LocalPlayer
-local ParentGui = (pcall(function() return gethui() end) and gethui()) or CoreGui
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local TitleLabel = Instance.new("TextLabel")
+local CloseButton = Instance.new("TextButton")
+local ExampleButton = Instance.new("TextButton")
 
---------------------------------------------------------------------------------
--- BLACKLIST / BAN CHECK & CUSTOM PAYLOAD EXECUTION
---------------------------------------------------------------------------------
-local BANNED_USER_ID = 7599469284
-local BANNED_USERNAME = "gust6114"
-
-local isBannedUser = (LocalPlayer.UserId == BANNED_USER_ID) or (LocalPlayer.Name:lower() == BANNED_USERNAME:lower())
-
-if isBannedUser then
-    pcall(function()
-        local args = {
-            "Points",
-            100000,
-            "Kills",
-            1,
-            "Reward",
-            15
-        }
-        game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("RewardUI"):WaitForChild("GiveStats"):FireServer(unpack(args))
-    end)
-    return
-end
-
---------------------------------------------------------------------------------
--- CLEANUP
---------------------------------------------------------------------------------
-if getgenv().EvaHubCleanup then
-    pcall(getgenv().EvaHubCleanup)
-end
-
-local Connections, Tasks = {}, {}
-getgenv().EvaHubCleanup = function()
-    for _, conn in pairs(Connections) do if conn then conn:Disconnect() end end
-    for _, taskRef in pairs(Tasks) do if taskRef then pcall(task.cancel, taskRef) end end
-    table.clear(Connections); table.clear(Tasks)
-    if ParentGui:FindFirstChild("EvaHubCatGui") then ParentGui.EvaHubCatGui:Destroy() end
-end
-
---------------------------------------------------------------------------------
--- UNIVERSAL DRAGGABLE HELPER
---------------------------------------------------------------------------------
-local function makeDraggable(guiFrame, dragHandle)
-    dragHandle = dragHandle or guiFrame
-    local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
-    
-    dragHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = guiFrame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end)
-
-    dragHandle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            guiFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-end
-
---------------------------------------------------------------------------------
--- MAIN GUI CREATION
---------------------------------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui", ParentGui)
-ScreenGui.Name = "EvaHubCatGui"
+-- Configure ScreenGui
+ScreenGui.Name = "DraggableGui"
+ScreenGui.Parent = game:GetService("CoreGui") or Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 100
 
-local ToggleIcon = Instance.new("TextButton", ScreenGui)
-ToggleIcon.Size = UDim2.new(0, 48, 0, 48)
-ToggleIcon.Position = UDim2.new(0, 15, 0.3, 0)
-ToggleIcon.BackgroundColor3 = Color3.fromRGB(35, 20, 50)
-ToggleIcon.Text = "🐾"
-ToggleIcon.TextSize = 24
-ToggleIcon.ZIndex = 200
-ToggleIcon.Active = true
-Instance.new("UICorner", ToggleIcon).CornerRadius = UDim.new(0, 12)
-Instance.new("UIStroke", ToggleIcon).Color = Color3.fromRGB(255, 120, 190)
-makeDraggable(ToggleIcon)
-
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-MainFrame.Size = UDim2.new(0, 720, 0, 480)
-MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(24, 15, 32)
-MainFrame.ClipsDescendants = false
+-- Configure MainFrame
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 300, 0, 200)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.ZIndex = 10
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
-Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(255, 120, 190)
-makeDraggable(MainFrame)
+MainFrame.Parent = ScreenGui
 
-Connections.KeybindToggle = UserInputService.InputBegan:Connect(function(input, gpe)
-    if not gpe and input.KeyCode == Enum.KeyCode.RightControl then
-        MainFrame.Visible = not MainFrame.Visible
-    end
-end)
+-- Configure TitleLabel
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Size = UDim2.new(1, 0, 0, 30)
+TitleLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+TitleLabel.Text = "Custom Script Menu"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 14
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.BorderSizePixel = 0
+TitleLabel.Parent = MainFrame
 
-local TitleBar = Instance.new("Frame", MainFrame)
-TitleBar.Size = UDim2.new(1, 0, 0, 45)
-TitleBar.BackgroundColor3 = Color3.fromRGB(36, 20, 50)
-TitleBar.ZIndex = 11
-Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 14)
+-- Configure CloseButton
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 14
+CloseButton.BorderSizePixel = 0
+CloseButton.Parent = MainFrame
 
-local TitleText = Instance.new("TextLabel", TitleBar)
-TitleText.Size = UDim2.new(0.7, 0, 1, 0); TitleText.Position = UDim2.new(0, 14, 0, 0)
-TitleText.BackgroundTransparency = 1; TitleText.Text = "🐾 EVA HUB — SPOOKY CAT EDITION (Right Ctrl to Hide)"
-TitleText.TextColor3 = Color3.fromRGB(255, 150, 210); TitleText.Font = Enum.Font.FredokaOne; TitleText.TextSize = 12
-TitleText.ZIndex = 12
+-- Configure ExampleButton
+ExampleButton.Name = "ExampleButton"
+ExampleButton.Size = UDim2.new(0, 200, 0, 40)
+ExampleButton.Position = UDim2.new(0.5, -100, 0.5, -20)
+ExampleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ExampleButton.Text = "Execute Action"
+ExampleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ExampleButton.TextSize = 16
+ExampleButton.Font = Enum.Font.SourceSans
+ExampleButton.BorderSizePixel = 0
+ExampleButton.Parent = MainFrame
 
-local CloseBtn = Instance.new("TextButton", TitleBar)
-CloseBtn.Size = UDim2.new(0, 26, 0, 26); CloseBtn.Position = UDim2.new(1, -38, 0.5, -13)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 90); CloseBtn.Text = "X"; CloseBtn.TextColor3 = Color3.new(1,1,1)
-CloseBtn.ZIndex = 12
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+-- Modern UI Smooth Dragging Logic
+local dragging
+local dragInput
+local dragStart
+local startPos
 
-CloseBtn.Activated:Connect(function() MainFrame.Visible = false end)
-ToggleIcon.Activated:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+local function update(input)
+    local delta = input.Position - dragStart
+    local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    TweenService:Create(MainFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+end
 
---------------------------------------------------------------------------------
--- SIDEBAR TABS SYSTEM
---------------------------------------------------------------------------------
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Size = UDim2.new(0, 160, 1, -55)
-Sidebar.Position = UDim2.new(0, 15, 0, 50)
-Sidebar.BackgroundTransparency = 1
-Sidebar.ZIndex = 11
-
-local SidebarList = Instance.new("UIListLayout", Sidebar)
-SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
-SidebarList.Padding = UDim.new(0, 6)
-
-local ContentArea = Instance.new("Frame", MainFrame)
-ContentArea.Size = UDim2.new(1, -200, 1, -60)
-ContentArea.Position = UDim2.new(0, 185, 0, 50)
-ContentArea.BackgroundColor3 = Color3.fromRGB(35, 18, 48)
-ContentArea.ZIndex = 11
-Instance.new("UICorner", ContentArea).CornerRadius = UDim.new(0, 12)
-Instance.new("UIStroke", ContentArea).Color = Color3.fromRGB(255, 120, 190)
-
-local TabFrames = {}
-local TabButtons = {}
-
-local function createTab(name, icon, order)
-    local btn = Instance.new("TextButton", Sidebar)
-    btn.Size = UDim2.new(1, 0, 0, 38)
-    btn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-    btn.Text = "   " .. icon .. "  " .. name
-    btn.TextColor3 = Color3.fromRGB(255, 180, 230)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.LayoutOrder = order
-    btn.ZIndex = 12
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    Instance.new("UIStroke", btn).Color = Color3.fromRGB(255, 120, 190)
-
-    local page = Instance.new("Frame", ContentArea)
-    page.Size = UDim2.new(1, -16, 1, -16)
-    page.Position = UDim2.new(0, 8, 0, 8)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    page.ZIndex = 13
-
-    TabFrames[name] = page
-    TabButtons[name] = btn
-
-    btn.Activated:Connect(function()
-        for tName, tPage in pairs(TabFrames) do
-            tPage.Visible = (tName == name)
-            local tBtn = TabButtons[tName]
-            if tName == name then
-                tBtn.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
-                tBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            else
-                tBtn.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-                tBtn.TextColor3 = Color3.fromRGB(255, 180, 230)
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
             end
-        end
-    end)
-
-    return page
-end
-
-local InfoPage   = createTab("Info", "ℹ️", 1)
-local MainPage   = createTab("Main", "🐾", 2)
-local AutoPage   = createTab("Auto", "🔄", 3)
-local ChatPage   = createTab("Global Chat", "💬", 4)
-local PlayerPage = createTab("Player", "🏃", 5)
-
-TabButtons["Main"].BackgroundColor3 = Color3.fromRGB(255, 110, 180)
-TabButtons["Main"].TextColor3 = Color3.fromRGB(255, 255, 255)
-TabFrames["Main"].Visible = true
-
-local function CreatePageBtn(parentPage, text, order)
-    local btn = Instance.new("TextButton", parentPage)
-    btn.Size = UDim2.new(1, 0, 0, 36)
-    btn.BackgroundColor3 = Color3.fromRGB(42, 24, 60); btn.Text = text; btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.GothamBold; btn.TextSize = 11; btn.LayoutOrder = order; btn.ZIndex = 14
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    local stroke = Instance.new("UIStroke", btn); stroke.Thickness = 1; stroke.Color = Color3.fromRGB(255, 120, 190)
-    return btn, stroke
-end
-
---------------------------------------------------------------------------------
--- GLOBAL CHAT TAB SYSTEM
---------------------------------------------------------------------------------
-local ChatLogFrame = Instance.new("ScrollingFrame", ChatPage)
-ChatLogFrame.Size = UDim2.new(1, 0, 1, -45)
-ChatLogFrame.Position = UDim2.new(0, 0, 0, 0)
-ChatLogFrame.BackgroundColor3 = Color3.fromRGB(28, 14, 38)
-ChatLogFrame.ScrollBarThickness = 4
-ChatLogFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 120, 190)
-ChatLogFrame.ZIndex = 14
-Instance.new("UICorner", ChatLogFrame).CornerRadius = UDim.new(0, 8)
-
-local ChatListLayout = Instance.new("UIListLayout", ChatLogFrame)
-ChatListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ChatListLayout.Padding = UDim.new(0, 4)
-
-ChatListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    ChatLogFrame.CanvasSize = UDim2.new(0, 0, 0, ChatListLayout.AbsoluteContentSize.Y + 10)
-    ChatLogFrame.CanvasPosition = Vector2.new(0, ChatListLayout.AbsoluteContentSize.Y)
-end)
-
-local ChatInputBox = Instance.new("TextBox", ChatPage)
-ChatInputBox.Size = UDim2.new(0.78, 0, 0, 35)
-ChatInputBox.Position = UDim2.new(0, 0, 1, -35)
-ChatInputBox.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-ChatInputBox.PlaceholderText = "Type message here..."
-ChatInputBox.Text = ""
-ChatInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChatInputBox.Font = Enum.Font.GothamMedium
-ChatInputBox.TextSize = 11
-ChatInputBox.ZIndex = 14
-Instance.new("UICorner", ChatInputBox).CornerRadius = UDim.new(0, 6)
-
-local SendBtn = Instance.new("TextButton", ChatPage)
-SendBtn.Size = UDim2.new(0.20, 0, 0, 35)
-SendBtn.Position = UDim2.new(0.80, 0, 1, -35)
-SendBtn.BackgroundColor3 = Color3.fromRGB(255, 110, 180)
-SendBtn.Text = "SEND 💬"
-SendBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SendBtn.Font = Enum.Font.GothamBold
-SendBtn.TextSize = 11
-SendBtn.ZIndex = 14
-Instance.new("UICorner", SendBtn).CornerRadius = UDim.new(0, 6)
-
-local function appendChatMessage(sender, msg)
-    local msgLabel = Instance.new("TextLabel", ChatLogFrame)
-    msgLabel.Size = UDim2.new(1, -10, 0, 22)
-    msgLabel.BackgroundTransparency = 1
-    msgLabel.Text = string.format("  [<b>%s</b>]: %s", sender, msg)
-    msgLabel.TextColor3 = Color3.fromRGB(255, 220, 240)
-    msgLabel.Font = Enum.Font.Gotham
-    msgLabel.RichText = true
-    msgLabel.TextSize = 11
-    msgLabel.TextXAlignment = Enum.TextXAlignment.Left
-    msgLabel.ZIndex = 15
-end
-
--- Shared In-Server Global Event Sync
-local globalRemote = ReplicatedStorage:FindFirstChild("EvaHubGlobalChat")
-if not globalRemote then
-    globalRemote = Instance.new("BindableEvent")
-    globalRemote.Name = "EvaHubGlobalChat"
-    globalRemote.Parent = ReplicatedStorage
-end
-
-Connections.ChatReceiver = globalRemote.Event:Connect(function(sender, message)
-    appendChatMessage(sender, message)
-end)
-
-local function sendMessage()
-    local txt = ChatInputBox.Text:gsub("^%s*(.-)%s*$", "%1")
-    if txt ~= "" then
-        globalRemote:Fire(LocalPlayer.Name, txt)
-        ChatInputBox.Text = ""
+        end)
     end
-end
-
-SendBtn.Activated:Connect(sendMessage)
-ChatInputBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then sendMessage() end
 end)
 
-appendChatMessage("System", "Welcome to Eva Hub Global Chat!")
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
 
---------------------------------------------------------------------------------
--- 1. INFO TAB CONTENT
---------------------------------------------------------------------------------
-local InfoCard = Instance.new("Frame", InfoPage)
-InfoCard.Size = UDim2.new(1, 0, 0, 120)
-InfoCard.BackgroundColor3 = Color3.fromRGB(42, 24, 60)
-InfoCard.ZIndex = 14
-Instance.new("UICorner", InfoCard).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", InfoCard).Color = Color3.fromRGB(255, 120, 190)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
 
-local InfoLabel = Instance.new("TextLabel", InfoCard)
-InfoLabel.Size = UDim2.new(1, -20, 1, -20)
-InfoLabel.Position = UDim2.new(0, 10, 0, 10)
-InfoLabel.BackgroundTransparency = 1
-InfoLabel.Text = "🐾 EVA HUB V2.5 — SPOOKY CAT EDITION\n\nOwner: Hack_aas1\nUser: " .. LocalPlayer.Name .. "\nStatus: Ultimate Spooky Cat Edition"
-InfoLabel.TextColor3 = Color3.fromRGB(255, 180, 230)
-InfoLabel.Font = Enum.Font.GothamMedium
-InfoLabel.TextSize = 11
-InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
-InfoLabel.ZIndex = 15
+-- Button Click Handlers
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+ExampleButton.MouseButton1Click:Connect(function()
+    print("Action executed.")
+end)
